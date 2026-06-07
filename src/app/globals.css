@@ -1,0 +1,104 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0B0F19;
+  --bg-2: #111827;
+  --bg-3: #1F2937;
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.16);
+  --indigo: #6366F1;
+  --indigo-dim: rgba(99, 102, 241, 0.12);
+  --indigo-border: rgba(99, 102, 241, 0.3);
+  --amber: var(--indigo);
+  --amber-dim: var(--indigo-dim);
+  --amber-border: var(--indigo-border);
+  --text: #F9FAFB;
+  --text-2: #9CA3AF;
+  --text-3: #6B7280;
+  --green: #10B981;
+  --green-dim: rgba(16, 185, 129, 0.1);
+  --red: #EF4444;
+  --red-dim: rgba(239, 68, 68, 0.1);
+}
+
+[data-theme='light'] {
+  --bg: #F9FAFB;
+  --bg-2: #FFFFFF;
+  --bg-3: #F3F4F6;
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.16);
+  --indigo: #4F46E5;
+  --indigo-dim: rgba(79, 70, 229, 0.1);
+  --indigo-border: rgba(79, 70, 229, 0.25);
+  --text: #111827;
+  --text-2: #4B5563;
+  --text-3: #9CA3AF;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.font-display { font-family: 'DM Serif Display', serif; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+.card { background: var(--bg-2); border: 0.5px solid var(--border); border-radius: 12px; transition: background 0.3s ease, border-color 0.3s ease; }
+.card-hover { transition: border-color 0.2s, transform 0.2s; }
+.card-hover:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+
+.btn-amber {
+  background: var(--amber); color: #FFFFFF; font-weight: 600;
+  font-family: 'Outfit', sans-serif; border: none; border-radius: 8px;
+  cursor: pointer; transition: opacity 0.15s, transform 0.15s;
+}
+.btn-amber:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-amber:active { transform: scale(0.97); }
+.btn-amber:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  background: transparent; color: var(--text-2);
+  border: 0.5px solid var(--border); border-radius: 8px;
+  cursor: pointer; font-family: 'Outfit', sans-serif;
+  transition: color 0.15s, border-color 0.15s;
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--border-hover); }
+
+.tag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; font-family: 'JetBrains Mono', monospace; }
+.tag-skill { background: rgba(255,255,255,0.05); color: var(--text-2); border: 0.5px solid var(--border); }
+.tag-match { background: var(--green-dim); color: var(--green); border: 0.5px solid rgba(16,185,129,0.2); }
+.tag-gap { background: var(--red-dim); color: var(--red); border: 0.5px solid rgba(239,68,68,0.2); }
+.tag-amber { background: var(--amber-dim); color: var(--amber); border: 0.5px solid var(--amber-border); }
+
+.nav-link { color: var(--text-2); text-decoration: none; font-size: 14px; transition: color 0.15s; }
+.nav-link:hover, .nav-link.active { color: var(--text); }
+.nav-link.active { color: var(--amber); }
+
+input, textarea, select {
+  background: var(--bg-3); border: 0.5px solid var(--border);
+  color: var(--text); border-radius: 8px;
+  font-family: 'Outfit', sans-serif; font-size: 14px;
+  outline: none; transition: background 0.3s ease, border-color 0.2s ease, color 0.3s ease;
+}
+input:focus, textarea:focus, select:focus { border-color: var(--amber-border); }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 0.5s ease forwards; }
+
+@keyframes shimmer { from { background-position: -200% 0; } to { background-position: 200% 0; } }
+.shimmer { background: linear-gradient(90deg, var(--bg-2) 25%, var(--bg-3) 50%, var(--bg-2) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
