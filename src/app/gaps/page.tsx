@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Job } from '@/lib/types'
+import NavBar from '@/components/NavBar'
 
 interface SkillAnalysis {
   skill: string
@@ -70,28 +71,6 @@ function getDefaultResources(skill: string) {
     { title: `${skill} on freeCodeCamp`, url: `https://www.freecodecamp.org/news/search/?query=${encodeURIComponent(skill)}`, type: 'Tutorial' },
     { title: `${skill} — YouTube`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent(skill + ' tutorial')}`, type: 'Video' },
   ]
-}
-
-function NavBar({ name }: { name: string }) {
-  return (
-    <nav style={{ borderBottom: '0.5px solid var(--border)', padding: '0 2rem', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 100 }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--amber)' }} />
-          <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 600, fontSize: 14, letterSpacing: '0.04em', color: 'var(--text)' }}>INTERNSHIP<span style={{ color: 'var(--amber)' }}>IQ</span></span>
-        </Link>
-        <div style={{ display: 'flex', gap: 28, alignItems: 'center' }}>
-          <Link href="/dashboard" className="nav-link">Dashboard</Link>
-          <Link href="/jobs" className="nav-link">Jobs</Link>
-          <Link href="/profile" className="nav-link">Profile</Link>
-          <Link href="/gaps" className="nav-link active">Skill Gaps</Link>
-          <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--amber-dim)', border: '1px solid var(--amber-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--amber)', fontWeight: 600 }}>
-            {name?.charAt(0)?.toUpperCase() || 'U'}
-          </div>
-        </div>
-      </div>
-    </nav>
-  )
 }
 
 export default function GapsPage() {
@@ -172,117 +151,115 @@ export default function GapsPage() {
     p === 'critical' ? 'var(--red-dim)' : p === 'high' ? 'var(--amber-dim)' : 'var(--bg-3)'
 
   const priorityBorder = (p: string) =>
-    p === 'critical' ? 'rgba(231,76,60,0.2)' : p === 'high' ? 'var(--amber-border)' : 'var(--border)'
+    p === 'critical' ? 'var(--red)' : p === 'high' ? 'var(--amber)' : 'var(--border)'
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', transition: 'background 0.3s, color 0.3s' }}>
       <NavBar name={userName} />
-      <div style={{ maxWidth: 860, margin: '0 auto', padding: '2rem' }}>
-        <div style={{ marginBottom: '2rem' }}>
-          <p className="font-mono" style={{ fontSize: 12, color: 'var(--amber)', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>CAREER INTELLIGENCE</p>
-          <h1 className="font-display" style={{ fontSize: 36, fontWeight: 400, marginBottom: '0.5rem' }}>Skill Gap Analysis</h1>
-          <p style={{ color: 'var(--text-2)', fontSize: 14 }}>
+      <div style={{ maxWidth: 860, margin: '0 auto', padding: '3rem 2rem' }}>
+        <div style={{ marginBottom: '2.5rem' }}>
+          <p className="font-mono" style={{ fontSize: 11, color: 'var(--amber)', letterSpacing: '0.1em', fontWeight: 900, marginBottom: '0.5rem' }}>CAREER INTELLIGENCE</p>
+          <h1 className="font-display" style={{ fontSize: 38, fontWeight: 900, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Skill Gap Analysis</h1>
+          <p style={{ color: 'var(--text-2)', fontSize: 14, fontWeight: 700 }}>
             Skills missing from your profile that appear in your matched internships — ranked by opportunity impact.
           </p>
         </div>
 
         {loading ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {[1, 2, 3, 4].map(i => <div key={i} className="card shimmer" style={{ height: 80 }} />)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            {[1, 2, 3, 4].map(i => <div key={i} className="shimmer" style={{ height: 88, border: '4px solid var(--border)' }} />)}
           </div>
         ) : analyses.length === 0 ? (
-          <div className="card" style={{ padding: '3rem', textAlign: 'center' }}>
-            <div style={{ fontSize: 32, marginBottom: '1rem' }}>🎯</div>
-            <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>No major gaps detected</div>
-            <p style={{ color: 'var(--text-2)', fontSize: 14 }}>Your profile covers the key skills across matched internships.</p>
+          <div className="neo-card" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: '1.25rem' }}>🎯</div>
+            <div style={{ fontWeight: 900, fontSize: 18, textTransform: 'uppercase', marginBottom: '0.5rem' }}>No major gaps detected</div>
+            <p style={{ color: 'var(--text-2)', fontSize: 14, fontWeight: 700 }}>Your profile covers all critical skills across your matched internships!</p>
           </div>
         ) : (
           <>
             {/* Summary row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: '1.5rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: '2rem' }}>
               {[
-                { label: 'Critical gaps', val: analyses.filter(a => a.priority === 'critical').length, color: 'var(--red)' },
-                { label: 'High priority', val: analyses.filter(a => a.priority === 'high').length, color: 'var(--amber)' },
-                { label: 'Total gaps', val: analyses.length, color: 'var(--text)' },
-              ].map(s => (
-                <div key={s.label} className="card" style={{ padding: '1rem' }}>
-                  <div className="font-mono" style={{ fontSize: 26, fontWeight: 600, color: s.color }}>{s.val}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{s.label}</div>
+                { label: 'CRITICAL GAPS', val: analyses.filter(a => a.priority === 'critical').length, color: 'var(--red)' },
+                { label: 'HIGH PRIORITY', val: analyses.filter(a => a.priority === 'high').length, color: 'var(--amber)' },
+                { label: 'TOTAL GAPS DETECTED', val: analyses.length, color: 'var(--neo-violet)' },
+              ].map((s, idx) => (
+                <div key={s.label} className="neo-card" style={{ padding: '1.25rem', transform: idx === 0 ? 'rotate(-1.5deg)' : idx === 1 ? 'rotate(1deg)' : 'none' }}>
+                  <div className="font-mono" style={{ fontSize: 32, fontWeight: 900, color: s.color }}>{s.val}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginTop: 4 }}>{s.label}</div>
                 </div>
               ))}
             </div>
 
             {/* Gap cards */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginBottom: '2.5rem' }}>
               {analyses.map((a, i) => (
-                <div key={a.skill} className="card" style={{ overflow: 'hidden', borderColor: expanded === a.skill ? 'var(--border-hover)' : undefined }}>
+                <div key={a.skill} className="neo-card" style={{ overflow: 'hidden', borderColor: expanded === a.skill ? 'var(--indigo)' : undefined, transform: expanded === a.skill ? 'translate(-2px, -2px)' : undefined, boxShadow: expanded === a.skill ? '6px 6px 0px var(--shadow)' : undefined }}>
                   {/* Header row */}
-                  <div style={{ padding: '1.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1rem' }}
+                  <div style={{ padding: '1.25rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '1.5rem' }}
                     onClick={() => setExpanded(expanded === a.skill ? null : a.skill)}>
                     {/* Rank */}
-                    <div className="font-mono" style={{ fontSize: 12, color: 'var(--text-3)', minWidth: 24 }}>#{i + 1}</div>
+                    <div className="font-mono" style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 900, minWidth: 28 }}>#{String(i + 1).padStart(2, '0')}</div>
 
                     {/* Skill + priority */}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                        <span style={{ fontWeight: 600, fontSize: 15 }}>{a.skill}</span>
-                        <span style={{ fontSize: 11, padding: '2px 8px', borderRadius: 6, fontWeight: 500, fontFamily: 'JetBrains Mono',
-                          background: priorityBg(a.priority), color: priorityColor(a.priority), border: `0.5px solid ${priorityBorder(a.priority)}` }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                        <span style={{ fontWeight: 900, fontSize: 16, textTransform: 'uppercase', color: 'var(--text)' }}>{a.skill}</span>
+                        <span className="neo-badge" style={{ fontSize: 9, padding: '2px 8px', background: priorityBg(a.priority), color: priorityColor(a.priority) === 'var(--text-2)' ? 'var(--text)' : '#000000', border: `2px solid var(--border)` }}>
                           {a.priority}
                         </span>
                       </div>
                       {/* Demand bar */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ flex: 1, height: 4, background: 'var(--bg-3)', borderRadius: 2 }}>
-                          <div style={{ height: 4, borderRadius: 2, background: priorityColor(a.priority), width: `${a.demandPct}%`, transition: 'width 0.7s ease' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ flex: 1, height: 16, background: 'var(--bg-3)', border: '2px solid var(--border)', borderRadius: 0 }}>
+                          <div style={{ height: '100%', background: priorityColor(a.priority), width: `${a.demandPct}%`, transition: 'width 0.7s ease' }} />
                         </div>
-                        <span className="font-mono" style={{ fontSize: 12, color: 'var(--text-3)', minWidth: 80 }}>
-                          {a.demandCount}/{a.totalJobs} jobs
+                        <span className="font-mono" style={{ fontSize: 12, color: 'var(--text-3)', minWidth: 90, fontWeight: 900 }}>
+                          {a.demandPct}% OF MATCHES
                         </span>
                       </div>
                     </div>
 
                     {/* Hours estimate */}
                     <div style={{ textAlign: 'right', minWidth: 80 }}>
-                      <div className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)' }}>~{a.estimatedHours}h</div>
-                      <div style={{ fontSize: 11, color: 'var(--text-3)' }}>to learn</div>
+                      <div className="font-mono" style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>~{a.estimatedHours}H</div>
+                      <div style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900 }}>EST. TIME</div>
                     </div>
 
                     {/* Expand chevron */}
-                    <div style={{ color: 'var(--text-3)', fontSize: 14, transition: 'transform 0.2s', transform: expanded === a.skill ? 'rotate(180deg)' : 'none' }}>▼</div>
+                    <div style={{ color: 'var(--text)', fontSize: 16, transition: 'transform 0.2s', transform: expanded === a.skill ? 'rotate(180deg)' : 'none', fontWeight: 900 }}>▼</div>
                   </div>
 
                   {/* Expanded detail */}
                   {expanded === a.skill && (
-                    <div style={{ borderTop: '0.5px solid var(--border)', padding: '1.25rem', background: 'var(--bg-3)' }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <div style={{ borderTop: '4px solid var(--border)', padding: '1.5rem', background: 'var(--bg-3)' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
                         {/* Affected jobs */}
                         <div>
-                          <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'JetBrains Mono', marginBottom: '0.75rem' }}>REQUIRED BY</div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                          <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginBottom: '1rem', letterSpacing: '0.05em' }}>REQUIRED IN YOUR MATCHES</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             {a.affectedJobs.slice(0, 4).map((j, idx) => (
-                              <div key={idx} style={{ fontSize: 12, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span style={{ color: 'var(--red)', fontSize: 10 }}>●</span> {j}
+                              <div key={idx} style={{ fontSize: 13, color: 'var(--text-2)', display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
+                                <span style={{ color: 'var(--red)', fontSize: 12 }}>▪</span> {j.toUpperCase()}
                               </div>
                             ))}
                             {a.affectedJobs.length > 4 && (
-                              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>+{a.affectedJobs.length - 4} more</div>
+                              <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginLeft: 16 }}>+{a.affectedJobs.length - 4} MORE LISTINGS</div>
                             )}
                           </div>
                         </div>
 
                         {/* Learning resources */}
                         <div>
-                          <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'JetBrains Mono', marginBottom: '0.75rem' }}>LEARN IT</div>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginBottom: '1rem', letterSpacing: '0.05em' }}>RECOMMENDED RESOURCES</div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                             {a.resources.map((r, idx) => (
                               <a key={idx} href={r.url} target="_blank" rel="noopener noreferrer"
-                                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', borderRadius: 6, background: 'var(--bg-2)', border: '0.5px solid var(--border)', textDecoration: 'none', transition: 'border-color 0.15s' }}
-                                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--border-hover)')}
-                                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border)')}>
-                                <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'var(--amber-dim)', color: 'var(--amber)', fontFamily: 'JetBrains Mono' }}>{r.type}</span>
-                                <span style={{ fontSize: 12, color: 'var(--text-2)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</span>
-                                <span style={{ fontSize: 11, color: 'var(--text-3)' }}>↗</span>
+                                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: '2px solid var(--border)', boxShadow: '2px 2px 0px var(--shadow)', background: 'var(--bg-2)', textDecoration: 'none', transition: 'transform 0.1s ease' }}
+                                className="hover:-translate-y-[1px] active:translate-y-[1px]">
+                                <span style={{ fontSize: 9, padding: '2px 6px', border: '1.5px solid var(--border)', background: 'var(--amber)', color: '#000000', fontWeight: 900, fontFamily: 'Space Grotesk' }}>{r.type.toUpperCase()}</span>
+                                <span style={{ fontSize: 12, color: 'var(--text)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 900 }}>{r.title}</span>
+                                <span style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 900 }}>↗</span>
                               </a>
                             ))}
                           </div>
@@ -294,10 +271,10 @@ export default function GapsPage() {
               ))}
             </div>
 
-            <div style={{ marginTop: '2rem', padding: '1.25rem', background: 'var(--amber-dim)', borderRadius: 10, border: '0.5px solid var(--amber-border)' }}>
-              <div style={{ fontWeight: 600, marginBottom: '0.5rem', color: 'var(--amber)' }}>Recommended learning order</div>
-              <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.7 }}>
-                Start with <strong style={{ color: 'var(--text)' }}>{analyses[0]?.skill}</strong> (critical, blocks the most matches), then work down by priority. Each skill you add increases your match scores across multiple internships simultaneously.
+            <div className="neo-card" style={{ padding: '1.5rem', background: 'var(--amber-dim)', border: '4px solid var(--border)', boxShadow: '6px 6px 0px var(--shadow)', transform: 'rotate(-0.5deg)' }}>
+              <div style={{ fontWeight: 900, fontSize: 16, textTransform: 'uppercase', marginBottom: '0.5rem', color: '#000000', background: 'var(--amber)', display: 'inline-block', padding: '2px 8px', border: '2px solid var(--border)' }}>RECOMMENDED LEARNING ORDER</div>
+              <div style={{ fontSize: 14, color: 'var(--text)', lineHeight: 1.7, fontWeight: 700, marginTop: 10 }}>
+                Start with <strong style={{ color: 'var(--indigo)' }}>{analyses[0]?.skill.toUpperCase()}</strong> (critical, blocks the most matches), then work down by priority. Each skill you add increases your match scores across multiple internships simultaneously.
               </div>
             </div>
           </>

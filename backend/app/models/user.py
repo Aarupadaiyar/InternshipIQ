@@ -33,7 +33,12 @@ class User(Base):
         nullable=False,
         index=True,  # Frequent lookup by email
     )
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    # ── OAuth Fields ──────────────────────────────────────────────────────────
+    oauth_provider: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
+    oauth_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
 
     # ── Status ────────────────────────────────────────────────────────────────
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

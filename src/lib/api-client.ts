@@ -59,7 +59,46 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   };
 
   try {
-    const response = await fetch(url, config);
+    let response = await fetch(url, config);
+
+    // Automatically attempt token refresh if we get a 401 Unauthorized response
+    if (response.status === 401 && !endpoint.includes('/auth/refresh') && !endpoint.includes('/auth/login') && !endpoint.includes('/auth/register')) {
+      const refreshToken = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+      if (refreshToken) {
+        try {
+          const refreshRes = await fetch(`${BASE_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: refreshToken })
+          });
+          
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            localStorage.setItem('token', refreshData.access_token);
+            
+            // Retry the original request with the new access token
+            headers.set('Authorization', `Bearer ${refreshData.access_token}`);
+            const retryConfig: RequestInit = {
+              ...config,
+              headers,
+            };
+            response = await fetch(url, retryConfig);
+          } else {
+            // Revoked/expired refresh token: clear everything and redirect to login
+            localStorage.removeItem('token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_email');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('iq_user');
+            if (typeof window !== 'undefined') {
+              window.location.href = '/login';
+            }
+          }
+        } catch (refreshErr) {
+          console.error('Failed to auto-refresh access token:', refreshErr);
+        }
+      }
+    }
 
     // Read response as JSON if possible, otherwise text
     let data: any = null;

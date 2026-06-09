@@ -2,8 +2,10 @@
 """
 Resume and Resume Profile API endpoints.
 """
+import os
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_user
@@ -168,3 +170,39 @@ async def save_profile(
     profile_repo = ResumeProfileRepository(db)
     profile = await profile_repo.create_or_update(resume_id, current_user.id, data)
     return profile
+
+
+@router.get(
+    "/{resume_id}/download",
+    summary="Download or view the user's resume file",
+)
+async def download_resume(
+    resume_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> FileResponse:
+    """
+    Downloads or views a specific resume file, strictly verifying that the caller
+    is the owner.
+    """
+    resume_repo = ResumeRepository(db)
+    resume = await resume_repo.get_by_id(resume_id, current_user.id)
+    if not resume:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found.",
+        )
+    
+    file_path = resume.file_path
+    if not os.path.exists(file_path):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found on disk.",
+        )
+    
+    return FileResponse(
+        path=file_path,
+        media_type=resume.mime_type,
+        filename=resume.original_filename,
+    )
+

@@ -39,6 +39,13 @@ class UserLogin(BaseModel):
     password: str = Field(..., examples=["securepassword"])
 
 
+class OAuthLoginRequest(BaseModel):
+    """Schema for OAuth login endpoints"""
+    code: str = Field(..., examples=["oauthcode123"])
+    redirect_uri: str = Field("", examples=["http://localhost:3000/auth/callback/google"])
+
+
+
 # ── Response Schemas ──────────────────────────────────────────────────────────
 
 class UserResponse(BaseModel):
@@ -56,8 +63,19 @@ class UserResponse(BaseModel):
 class TokenResponse(BaseModel):
     """Schema for POST /auth/login response."""
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class TokenRefreshRequest(BaseModel):
+    """Schema for POST /auth/refresh request."""
+    refresh_token: str
+
+
+class LogoutRequest(BaseModel):
+    """Schema for POST /auth/logout request."""
+    refresh_token: str
 
 
 class MessageResponse(BaseModel):

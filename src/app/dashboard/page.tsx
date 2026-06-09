@@ -11,27 +11,27 @@ function ScoreRing({ score }: { score: number }) {
   const color = score >= 70 ? 'var(--green)' : score >= 45 ? 'var(--amber)' : 'var(--red)'
 
   return (
-    <svg width={130} height={130} viewBox="0 0 130 130">
-      <circle cx={65} cy={65} r={r} fill="none" stroke="var(--border)" strokeWidth={8} />
+    <svg width={130} height={130} viewBox="0 0 130 130" style={{ filter: 'drop-shadow(4px 4px 0px var(--shadow))' }}>
+      <circle cx={65} cy={65} r={r} fill="var(--bg-2)" stroke="var(--border)" strokeWidth={8} />
       <circle cx={65} cy={65} r={r} fill="none" stroke={color} strokeWidth={8}
         strokeDasharray={circ} strokeDashoffset={offset}
-        strokeLinecap="round" transform="rotate(-90 65 65)"
+        strokeLinecap="square" transform="rotate(-90 65 65)"
         style={{ transition: 'stroke-dashoffset 1s ease' }} />
-      <text x={65} y={60} textAnchor="middle" fill={color} fontFamily="JetBrains Mono" fontWeight="600" fontSize={22}>{score}</text>
-      <text x={65} y={78} textAnchor="middle" fill="var(--text-3)" fontFamily="Outfit" fontSize={11}>avg match</text>
+      <text x={65} y={62} textAnchor="middle" fill="var(--text)" fontFamily="Space Grotesk" fontWeight="900" fontSize={26}>{score}%</text>
+      <text x={65} y={82} textAnchor="middle" fill="var(--text-3)" fontFamily="Space Grotesk" fontWeight="900" fontSize={10} letterSpacing="0.05em">AVG MATCH</text>
     </svg>
   )
 }
 
 function SkillGapBar({ skill, count, total }: { skill: string; count: number; total: number }) {
   return (
-    <div style={{ marginBottom: '0.75rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-        <span style={{ fontSize: 13, fontFamily: 'JetBrains Mono' }}>{skill}</span>
-        <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{count}/{total} jobs require</span>
+    <div style={{ marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+        <span style={{ fontSize: 13, fontFamily: 'Space Grotesk', fontWeight: 900, textTransform: 'uppercase' }}>{skill}</span>
+        <span className="font-mono" style={{ fontSize: 11, color: 'var(--text-3)', fontWeight: 900 }}>{count}/{total} JOBS REQUIRE</span>
       </div>
-      <div style={{ height: 4, background: 'var(--bg-3)', borderRadius: 2 }}>
-        <div style={{ height: 4, borderRadius: 2, background: 'var(--amber)', width: `${(count / total) * 100}%`, transition: 'width 0.8s ease' }} />
+      <div style={{ height: 16, background: 'var(--bg-3)', border: '2px solid var(--border)', borderRadius: 0 }}>
+        <div style={{ height: '100%', background: 'var(--amber)', width: `${(count / total) * 100}%`, transition: 'width 0.8s ease' }} />
       </div>
     </div>
   )
@@ -106,107 +106,107 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1rem', background: 'var(--bg)' }}>
-        <div className="font-mono" style={{ color: 'var(--amber)', fontSize: 14 }}>Computing matches...</div>
-        <div style={{ fontSize: 13, color: 'var(--text-3)' }}>Scoring internships from database against your profile</div>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '1.5rem', background: 'var(--bg)' }}>
+        <div className="font-mono" style={{ color: 'var(--amber)', fontSize: 16, border: '4px solid var(--border)', background: '#000000', padding: '12px 24px', boxShadow: '6px 6px 0px var(--shadow)' }}>COMPUTING MATCHES...</div>
+        <div style={{ fontSize: 13, color: 'var(--text-3)', fontWeight: 900, fontFamily: 'Space Grotesk' }}>SCORING INTERNSHIPS FROM DATABASE AGAINST YOUR PROFILE</div>
       </div>
     )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', transition: 'background 0.3s, color 0.3s' }}>
       <NavBar name={profile?.name || ''} />
 
-      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2rem' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '3rem 2rem' }}>
         {/* Welcome */}
-        <div style={{ marginBottom: '2rem' }}>
-          <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'JetBrains Mono', marginBottom: '0.25rem' }}>GOOD MORNING</div>
-          <h1 className="font-display" style={{ fontSize: 36, fontWeight: 400 }}>
-            {profile?.name ? profile.name.split(' ')[0] : 'Welcome'}&apos;s Career Intelligence
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginBottom: '0.5rem', letterSpacing: '0.1em' }}>WELCOME BACK</div>
+          <h1 className="font-display" style={{ fontSize: 'clamp(28px, 4vw, 42px)', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '-0.02em' }}>
+            {profile?.name ? profile.name.split(' ')[0] : 'User'}&apos;S CAREER INTELLIGENCE
           </h1>
         </div>
 
         {/* Top row stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 12, marginBottom: '1.5rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 16, marginBottom: '2rem' }}>
           {[
-            { label: 'Jobs matched', value: jobs.length.toString() },
-            { label: 'Top match', value: `${jobs[0]?.matchScore || 0}%` },
-            { label: 'Skills detected', value: profile?.skills?.length?.toString() || '0' },
-            { label: 'Skill gaps found', value: topGaps.length.toString() },
-          ].map(s => (
-            <div key={s.label} className="card" style={{ padding: '1.25rem' }}>
-              <div style={{ fontSize: 12, color: 'var(--text-3)', marginBottom: 4 }}>{s.label}</div>
-              <div className="font-mono" style={{ fontSize: 26, fontWeight: 600, color: 'var(--amber)' }}>{s.value}</div>
+            { label: 'JOBS MATCHED', value: jobs.length.toString(), color: 'var(--neo-violet)' },
+            { label: 'TOP MATCH', value: `${jobs[0]?.matchScore || 0}%`, color: 'var(--amber)' },
+            { label: 'SKILLS DETECTED', value: profile?.skills?.length?.toString() || '0', color: 'var(--indigo)' },
+            { label: 'SKILL GAPS FOUND', value: topGaps.length.toString(), color: 'var(--red)' },
+          ].map((s, idx) => (
+            <div key={s.label} className="neo-card" style={{ padding: '1.25rem', transform: idx % 2 === 0 ? 'rotate(-1deg)' : 'rotate(1deg)' }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginBottom: 6 }}>{s.label}</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: '#000000', background: s.color, display: 'inline-block', padding: '2px 10px', border: '2px solid var(--border)', boxShadow: '2px 2px 0px var(--shadow)' }}>{s.value}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
           {/* Left col */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
             {/* Score overview */}
-            <div className="card" style={{ padding: '1.5rem' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'JetBrains Mono', marginBottom: '1rem' }}>AVERAGE MATCH SCORE</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div className="neo-card" style={{ padding: '1.5rem' }}>
+              <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginBottom: '1.25rem' }}>AVERAGE MATCH SCORE</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
                 <ScoreRing score={avgScore} />
                 <div>
-                  <div style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: '0.5rem' }}>Across {jobs.length} internships</div>
-                  <div style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6 }}>
-                    {avgScore >= 70 ? 'Strong profile. You\'re competitive for most of these roles.' : avgScore >= 45 ? 'Good foundation. Closing a few skill gaps will push scores higher.' : 'Building blocks are there. Focus on high-priority skill gaps first.'}
+                  <div style={{ fontSize: 15, color: 'var(--text)', fontWeight: 900, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Across {jobs.length} internships</div>
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.6, fontWeight: 700 }}>
+                    {avgScore >= 70 ? 'Strong profile. You\'re highly competitive for most of these roles.' : avgScore >= 45 ? 'Good foundation. Closing a few skill gaps will push match scores higher.' : 'Building blocks are there. Focus on high-priority skill gaps first.'}
                   </div>
                   <Link href="/jobs">
-                    <button className="btn-amber" style={{ marginTop: '1rem', padding: '8px 16px', fontSize: 13 }}>View all matches →</button>
+                    <button className="neo-btn" style={{ background: 'var(--amber)', marginTop: '1.25rem', padding: '8px 16px', fontSize: 13 }}>View all matches →</button>
                   </Link>
                 </div>
               </div>
             </div>
 
             {/* Skill gap analysis */}
-            <div className="card" style={{ padding: '1.5rem' }}>
+            <div className="neo-card" style={{ padding: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-                <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'JetBrains Mono' }}>TOP SKILL GAPS</div>
-                <span className="tag tag-amber">{topGaps.length} gaps</span>
+                <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900 }}>TOP SKILL GAPS</div>
+                <span className="neo-badge" style={{ background: 'var(--amber)', color: '#000000' }}>{topGaps.length} GAPS</span>
               </div>
               {topGaps.length > 0 ? topGaps.map(g => (
                 <SkillGapBar key={g.skill} skill={g.skill} count={g.count} total={jobs.length} />
               )) : (
-                <p style={{ color: 'var(--text-2)', fontSize: 14 }}>No major gaps detected — your profile is strong for these roles.</p>
+                <p style={{ color: 'var(--text-2)', fontSize: 14, fontWeight: 700 }}>No major gaps detected — your profile is strong for these roles.</p>
               )}
               {topGaps.length > 0 && (
-                <div style={{ marginTop: '1rem', padding: '0.75rem', background: 'var(--amber-dim)', borderRadius: 8, border: '0.5px solid var(--amber-border)' }}>
-                  <div style={{ fontSize: 13, color: 'var(--amber)', fontWeight: 500 }}>Priority: {topGaps[0]?.skill || 'N/A'}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 2 }}>Required by {topGaps[0]?.count || 0} of your matched jobs</div>
+                <div style={{ marginTop: '1.25rem', padding: '1rem', background: 'var(--amber-dim)', border: '2px solid var(--border)' }}>
+                  <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 900, textTransform: 'uppercase' }}>PRIORITY: {topGaps[0]?.skill || 'N/A'}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-2)', marginTop: 4, fontWeight: 700 }}>Required by {topGaps[0]?.count || 0} of your matched jobs. Expand on Skill Gaps page to view resources.</div>
                 </div>
               )}
             </div>
           </div>
 
           {/* Right col */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
             {/* Today's digest */}
-            <div className="card" style={{ padding: '1.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'JetBrains Mono' }}>TODAY&apos;S TOP MATCHES</div>
-                <Link href="/jobs" style={{ fontSize: 12, color: 'var(--amber)', textDecoration: 'none' }}>View all →</Link>
+            <div className="neo-card" style={{ padding: '1.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900 }}>TODAY&apos;S TOP MATCHES</div>
+                <Link href="/jobs" style={{ fontSize: 12, color: 'var(--text-2)', textTransform: 'uppercase', fontWeight: 900, textDecoration: 'underline' }}>View all →</Link>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 {topJobs.map(job => (
-                  <div key={job.id} className="card card-hover" style={{ padding: '1rem', cursor: 'pointer' }} onClick={() => window.location.href = '/jobs'}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 }}>
+                  <div key={job.id} className="neo-card" style={{ padding: '1.25rem', cursor: 'pointer', background: 'var(--bg)' }} onClick={() => window.location.href = '/jobs'}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                       <div>
-                        <div style={{ fontWeight: 600, fontSize: 14 }}>{job.title}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text-2)' }}>{job.company} · {job.location}</div>
+                        <div style={{ fontWeight: 900, fontSize: 15, textTransform: 'uppercase', color: 'var(--text)' }}>{job.title}</div>
+                        <div style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 700 }}>{job.company} · {job.location}</div>
                       </div>
-                      <div className="font-mono" style={{ fontSize: 18, fontWeight: 600, color: (job.matchScore || 0) >= 70 ? 'var(--green)' : 'var(--amber)' }}>
+                      <div className="font-mono" style={{ fontSize: 20, fontWeight: 900, color: (job.matchScore || 0) >= 70 ? 'var(--green)' : 'var(--amber)' }}>
                         {job.matchScore}%
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
-                      <span className="tag" style={{ fontSize: 11, padding: '2px 6px', background: 'var(--bg-3)', color: 'var(--text-3)', border: '0.5px solid var(--border)' }}>{job.source}</span>
-                      <span className="tag" style={{ fontSize: 11, padding: '2px 6px', background: 'var(--bg-3)', color: 'var(--text-3)', border: '0.5px solid var(--border)' }}>{job.type}</span>
-                      {job.salary && <span className="tag tag-amber" style={{ fontSize: 11, padding: '2px 6px' }}>{job.salary}</span>}
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 10 }}>
+                      <span className="neo-badge" style={{ fontSize: 10, padding: '1px 6px', background: 'var(--bg-3)' }}>{job.source}</span>
+                      <span className="neo-badge" style={{ fontSize: 10, padding: '1px 6px', background: 'var(--bg-3)' }}>{job.type}</span>
+                      {job.salary && <span className="neo-badge" style={{ fontSize: 10, padding: '1px 6px', background: 'var(--amber)', color: '#000000' }}>{job.salary}</span>}
                     </div>
                   </div>
                 ))}
@@ -214,12 +214,12 @@ export default function DashboardPage() {
             </div>
 
             {/* Skills you have */}
-            <div className="card" style={{ padding: '1.5rem' }}>
-              <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'JetBrains Mono', marginBottom: '1rem' }}>YOUR SKILLS</div>
+            <div className="neo-card" style={{ padding: '1.5rem' }}>
+              <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginBottom: '1.25rem' }}>YOUR DETECTED SKILLS</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {(profile?.skills || []).map(s => <span key={s} className="tag tag-match">{s}</span>)}
               </div>
-              {(profile?.skills?.length || 0) === 0 && <p style={{ color: 'var(--text-3)', fontSize: 13 }}>Upload your resume to detect skills.</p>}
+              {(profile?.skills?.length || 0) === 0 && <p style={{ color: 'var(--text-3)', fontSize: 13, fontWeight: 700 }}>Upload your resume to detect skills.</p>}
             </div>
           </div>
         </div>

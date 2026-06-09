@@ -51,8 +51,19 @@ class JobResponse(BaseModel):
     skillGaps: Optional[List[str]] = None
 
 
+class SourceItem(BaseModel):
+    value: str
+    label: str
+
+
 class JobPaginatedResponse(BaseModel):
     jobs: List[JobResponse]
     total: int
-    sources: List[str]
+    sources: List[SourceItem]
+    locations: List[str]
     fetchedAt: str
+    suggestedSearches: Optional[List[str]] = None
+    suggestedDomains: Optional[List[str]] = None
+    suggestedKeywords: Optional[List[str]] = None
+
+

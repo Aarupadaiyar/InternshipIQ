@@ -77,3 +77,32 @@ def generate_unique_filename(original_filename: str, user_id: uuid.UUID) -> str:
     unique_id = uuid.uuid4().hex
     user_prefix = str(user_id).replace("-", "")[:8]
     return f"{user_prefix}_{unique_id}{ext}"
+
+
+def validate_file_signature(contents: bytes, mime_type: str) -> None:
+    """
+    Validate the file's magic bytes to ensure it matches its declared format.
+    - PDF magic bytes: '%PDF' (0x25, 0x50, 0x44, 0x46)
+    - DOCX (ZIP archive) magic bytes: 'PK\\x03\\x04' (0x50, 0x4b, 0x03, 0x04)
+    Raises HTTP 415 if signature check fails.
+    """
+    if len(contents) < 4:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File is too small to be a valid document."
+        )
+    
+    header = contents[:4]
+    if mime_type == "application/pdf":
+        if header != b"%PDF":
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Malicious or invalid file: file content does not match PDF signature."
+            )
+    elif mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        if header != b"PK\x03\x04":
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail="Malicious or invalid file: file content does not match DOCX signature."
+            )
+

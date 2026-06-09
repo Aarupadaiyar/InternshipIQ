@@ -14,6 +14,7 @@ from app.utils.file_utils import (
     validate_mime_type,
     validate_file_size,
     generate_unique_filename,
+    validate_file_signature,
 )
 from app.models.resume import Resume
 
@@ -29,11 +30,13 @@ class ResumeService:
 
     async def validate_file(self, file: UploadFile) -> bytes:
         """
-        Validates the file type and size.
+        Validates the file type, size, and magic byte signature.
         Returns the file contents in bytes.
         """
-        validate_mime_type(file)
-        return await validate_file_size(file, settings.max_file_size_bytes)
+        mime_type = validate_mime_type(file)
+        file_bytes = await validate_file_size(file, settings.max_file_size_bytes)
+        validate_file_signature(file_bytes, mime_type)
+        return file_bytes
 
     async def process_upload(self, file: UploadFile, user_id: uuid.UUID) -> Resume:
         """

@@ -8,6 +8,7 @@ export default function NavBar({ name: propName }: { name?: string }) {
   const router = useRouter()
   const [userName, setUserName] = useState(propName || '')
   const [theme, setTheme] = useState('dark')
+  const [isPremium, setIsPremium] = useState(false)
 
   useEffect(() => {
     // Read session username
@@ -22,6 +23,22 @@ export default function NavBar({ name: propName }: { name?: string }) {
       setTheme(storedTheme)
       document.documentElement.setAttribute('data-theme', storedTheme)
     }
+
+    // Check Premium Status
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null
+    if (token) {
+      fetch('http://localhost:8000/payments/status', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => {
+          if (res.ok) return res.json()
+          return { is_premium: false }
+        })
+        .then(data => {
+          setIsPremium(!!data.is_premium)
+        })
+        .catch(() => {})
+    }
   }, [propName, userName])
 
   const toggleTheme = () => {
@@ -31,8 +48,21 @@ export default function NavBar({ name: propName }: { name?: string }) {
     document.documentElement.setAttribute('data-theme', nextTheme)
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const refreshToken = localStorage.getItem('refresh_token')
+    if (refreshToken) {
+      try {
+        await fetch('http://localhost:8000/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh_token: refreshToken })
+        })
+      } catch (err) {
+        console.error('Failed to notify backend logout:', err)
+      }
+    }
     localStorage.removeItem('token')
+    localStorage.removeItem('refresh_token')
     localStorage.removeItem('user_email')
     localStorage.removeItem('user_name')
     localStorage.removeItem('iq_user')
@@ -46,48 +76,139 @@ export default function NavBar({ name: propName }: { name?: string }) {
         { href: '/dashboard', label: 'Dashboard' },
         { href: '/jobs', label: 'Jobs' },
         { href: '/gaps', label: 'Skill Gaps' },
+        { href: '/analytics', label: 'Analytics' },
+        { href: '/pricing', label: 'Pricing' },
+        { href: '/developer', label: 'About Developer' },
         { href: '/profile', label: 'Profile' },
       ]
     : [
-        { href: '/jobs', label: 'Browse Jobs' }
+        { href: '/jobs', label: 'Browse Jobs' },
+        { href: '/analytics', label: 'Analytics' },
+        { href: '/pricing', label: 'Pricing' },
+        { href: '/developer', label: 'About Developer' },
       ]
 
   return (
-    <nav style={{ borderBottom: '0.5px solid var(--border)', padding: '0 2rem', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 100, transition: 'background 0.3s, border-color 0.3s' }}>
-      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 56 }}>
-        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--amber)' }} />
-          <span style={{ fontFamily: 'JetBrains Mono', fontWeight: 600, fontSize: 14, letterSpacing: '0.04em', color: 'var(--text)' }}>
-            INTERNSHIP<span style={{ color: 'var(--amber)' }}>IQ</span>
-          </span>
+    <nav style={{ borderBottom: '4px solid var(--border)', padding: '0 2rem', position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 100, transition: 'background 0.3s, border-color 0.3s' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+        
+        {/* Bold Logo Box */}
+        <Link href="/" style={{ textDecoration: 'none' }}>
+          <div 
+            style={{ 
+              border: '3px solid var(--border)',
+              background: 'var(--amber)',
+              color: '#000000',
+              padding: '4px 12px',
+              fontFamily: 'Space Grotesk, sans-serif',
+              fontWeight: 900,
+              fontSize: 14,
+              letterSpacing: '0.08em',
+              boxShadow: '3px 3px 0px var(--shadow)',
+              transform: 'rotate(-1.5deg)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+            }}
+          >
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#000000' }} />
+            <span>INTERNSHIP<span style={{ color: 'var(--indigo)' }}>IQ</span></span>
+          </div>
         </Link>
+
         <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
+          
+          {/* Nav Links */}
           {links.map(l => (
-            <Link key={l.href} href={l.href}
-              style={{ fontSize: 14, textDecoration: 'none', color: path === l.href ? 'var(--amber)' : 'var(--text-2)', transition: 'color 0.15s' }}>
+            <Link 
+              key={l.href} 
+              href={l.href}
+              className={`nav-link ${path === l.href ? 'active' : ''}`}
+            >
               {l.label}
             </Link>
           ))}
           
-          {/* Theme Toggler */}
-          <button onClick={toggleTheme} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: '4px', display: 'flex', alignItems: 'center', color: 'var(--text-2)' }} title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}>
+          {/* Neo-brutalist Theme Toggler */}
+          <button 
+            onClick={toggleTheme} 
+            style={{ 
+              background: 'var(--bg-2)', 
+              border: '3px solid var(--border)', 
+              boxShadow: '2px 2px 0px var(--shadow)',
+              cursor: 'pointer', 
+              fontSize: 15, 
+              padding: '6px', 
+              borderRadius: '50%',
+              display: 'flex', 
+              alignItems: 'center', 
+              color: 'var(--text)',
+              transition: 'transform 0.1s ease',
+            }} 
+            className="hover:scale-105 active:scale-95"
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+          >
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
           {isLoggedIn ? (
-            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--amber-dim)', border: '1px solid var(--amber-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, color: 'var(--amber)', fontWeight: 600 }} title={userName}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              {isPremium && (
+                <span className="neo-badge" style={{ background: 'var(--amber)', color: '#000000', fontSize: 9, padding: '2px 6px', fontWeight: 900, transform: 'rotate(-2deg)' }}>
+                  👑 PREMIUM
+                </span>
+              )}
+              <div 
+                style={{ 
+                  width: 32, 
+                  height: 32, 
+                  border: isPremium ? '2.5px solid var(--amber)' : '2px solid var(--border)',
+                  boxShadow: '2px 2px 0px var(--shadow)',
+                  background: isPremium ? 'var(--amber)' : 'var(--neo-violet)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  fontSize: 13, 
+                  color: '#000000', 
+                  fontWeight: 900 
+                }} 
+                title={userName}
+              >
                 {userName.charAt(0).toUpperCase() || 'U'}
               </div>
-              <button onClick={handleLogout} className="btn-ghost" style={{ fontSize: 12, padding: '4px 10px' }}>
+              <button 
+                onClick={handleLogout} 
+                style={{ 
+                  background: 'var(--bg-2)', 
+                  color: 'var(--text)', 
+                  border: '2px solid var(--border)', 
+                  fontSize: 12, 
+                  fontWeight: 700,
+                  textTransform: 'uppercase',
+                  padding: '4px 10px',
+                  cursor: 'pointer',
+                  boxShadow: '2px 2px 0px var(--shadow)',
+                }}
+                className="hover:bg-[var(--indigo)] hover:text-black"
+              >
                 Logout
               </button>
             </div>
           ) : (
-            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <Link href="/login" style={{ fontSize: 14, color: 'var(--text-2)', textDecoration: 'none' }}>Log in</Link>
-              <Link href="/signup">
-                <button className="btn-amber" style={{ padding: '6px 14px', fontSize: 13 }}>Sign up</button>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+              <Link href="/login" className="nav-link">Log in</Link>
+              <Link href="/signup" style={{ textDecoration: 'none' }}>
+                <button 
+                  className="neo-btn" 
+                  style={{ 
+                    padding: '8px 16px', 
+                    fontSize: 13, 
+                    border: '3px solid var(--border)',
+                    boxShadow: '3px 3px 0px var(--shadow)' 
+                  }}
+                >
+                  Sign up
+                </button>
               </Link>
             </div>
           )}

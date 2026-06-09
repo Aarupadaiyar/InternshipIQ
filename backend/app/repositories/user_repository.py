@@ -48,6 +48,36 @@ class UserRepository:
         await self.db.refresh(user)
         return user
 
+    async def get_or_create_oauth_user(self, email: str, full_name: str, provider: str, oauth_id: str) -> User:
+        """
+        Fetch a user by email, linking the OAuth details if they aren't already set,
+        or create a new user without a password if they don't exist.
+        """
+        user = await self.get_by_email(email)
+        if user:
+            # If user exists but provider is not set, link provider details
+            if not user.oauth_provider:
+                user.oauth_provider = provider
+                user.oauth_id = oauth_id
+                self.db.add(user)
+                await self.db.flush()
+                await self.db.refresh(user)
+            return user
+
+        user = User(
+            full_name=full_name.strip(),
+            email=email.lower().strip(),
+            password_hash=None,  # Nullable for OAuth accounts
+            oauth_provider=provider,
+            oauth_id=oauth_id,
+            is_active=True,
+        )
+        self.db.add(user)
+        await self.db.flush()
+        await self.db.refresh(user)
+        return user
+
+
     async def update_name(self, user_id: uuid.UUID, full_name: str) -> Optional[User]:
         """Update a user's display name."""
         await self.db.execute(

@@ -51,3 +51,8 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
+
+# Ensure all models are registered in SQLAlchemy's Base metadata
+import app.database.base
+
