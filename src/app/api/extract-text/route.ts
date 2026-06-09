@@ -28,9 +28,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unsupported file type. Use PDF, DOCX, or TXT.' }, { status: 400 })
     }
 
+    if ((!text || text.trim().length < 20) && (file.name.endsWith('.pdf') || file.type === 'application/pdf')) {
+      text = await extractWithGeminiOcr(buffer, file.type || 'application/pdf')
+    }
+
     if (!text || text.trim().length < 20) {
       return NextResponse.json(
-        { error: 'Could not extract text from file. Try saving as DOCX or TXT instead.' },
+        { error: 'Could not extract text from file. Configure GEMINI_API_KEY for OCR fallback or upload DOCX/TXT.', ocrRequired: true },
         { status: 422 }
       )
     }
@@ -42,6 +46,30 @@ export async function POST(req: NextRequest) {
       { error: 'Failed to extract text: ' + (err instanceof Error ? err.message : String(err)) },
       { status: 500 }
     )
+  }
+}
+
+async function extractWithGeminiOcr(buffer: Buffer, mimeType: string): Promise<string> {
+  const apiKey = process.env.GEMINI_API_KEY
+  if (!apiKey || apiKey === 'your-gemini-api-key-here') return ''
+
+  try {
+    const { GoogleGenerativeAI } = await import('@google/generative-ai')
+    const genAI = new GoogleGenerativeAI(apiKey)
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+    const result = await model.generateContent([
+      {
+        inlineData: {
+          data: buffer.toString('base64'),
+          mimeType,
+        },
+      },
+      'Extract all readable resume text from this document. Preserve section headings and line breaks. Return plain text only.',
+    ])
+    return result.response.text().trim()
+  } catch (error) {
+    console.error('Gemini OCR fallback failed:', error)
+    return ''
   }
 }
 
