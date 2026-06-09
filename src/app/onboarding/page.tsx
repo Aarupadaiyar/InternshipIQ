@@ -9,6 +9,7 @@ const STEP_LABELS = ['Upload resume', 'Review profile', 'Set preferences']
 
 const ROLE_OPTIONS = ['ML Engineer', 'Data Scientist', 'AI Researcher', 'Backend Engineer', 'Frontend Engineer', 'Full Stack Engineer', 'Data Engineer', 'NLP Engineer', 'DevOps Engineer', 'Product Engineer']
 const DOMAIN_OPTIONS = ['AI / ML', 'FinTech', 'HealthTech', 'EdTech', 'Climate', 'Developer Tools', 'Consumer', 'Enterprise SaaS', 'Gaming', 'Infrastructure']
+type ParsedProjectDraft = { tech?: string[]; technologies?: string[]; [key: string]: unknown }
 
 function StepBar({ current }: { current: number }) {
   return (
@@ -42,6 +43,8 @@ export default function OnboardingPage() {
   const [parsing, setParsing] = useState(false)
   const [parseError, setParseError] = useState('')
   const [profile, setProfile] = useState<ParsedProfile | null>(null)
+  const [missingFields, setMissingFields] = useState<string[]>([])
+  const [lowConfidenceFields, setLowConfidenceFields] = useState<string[]>([])
   const [rawText, setRawText] = useState('')
   const [prefs, setPrefs] = useState<UserPreferences>({ roles: [], domains: [], locations: [], remote: 'any' })
 
@@ -114,7 +117,16 @@ export default function OnboardingPage() {
       const parseData = await parseRes.json()
       if (parseData.error) throw new Error(parseData.error)
       
-      const parsedProfile = parseData.profile
+      const parsedProfile = {
+        ...parseData.profile,
+        projects: (parseData.profile.projects || []).map((p: ParsedProjectDraft) => ({
+          ...p,
+          tech: p.tech || p.technologies || [],
+        })),
+        confidence: parseData.confidence || parseData.profile.confidence || {},
+      }
+      setMissingFields(parseData.missingFields || [])
+      setLowConfidenceFields(parseData.lowConfidenceFields || [])
 
       // 2. Upload file to backend /resume/upload
       const formData = new FormData()
@@ -141,7 +153,9 @@ export default function OnboardingPage() {
           experience: parsedProfile.experience || [],
           projects: parsedProfile.projects || [],
           certifications: parsedProfile.certifications || [],
-          links: parsedProfile.links || {}
+          achievements: parsedProfile.achievements || [],
+          links: parsedProfile.links || {},
+          raw_text: text
         })
       })
 
@@ -149,8 +163,8 @@ export default function OnboardingPage() {
 
       setProfile(parsedProfile)
       setStep(1)
-    } catch (err: any) {
-      setParseError(err.message || 'Failed to parse resume. Try again.')
+    } catch (err: unknown) {
+      setParseError(err instanceof Error ? err.message : 'Failed to parse resume. Try again.')
     } finally {
       setParsing(false)
     }
@@ -187,11 +201,12 @@ export default function OnboardingPage() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          roles: prefs.roles,
-          domains: prefs.domains,
-          locations: prefs.locations,
-          remote: prefs.remote,
-          salary_min: prefs.salaryMin || 0
+          preferred_roles: prefs.roles,
+          preferred_domains: prefs.domains,
+          preferred_locations: prefs.locations,
+          preferred_countries: ['India'],
+          work_mode: prefs.remote,
+          minimum_stipend: prefs.salaryMin || 0
         })
       })
 
@@ -200,8 +215,8 @@ export default function OnboardingPage() {
       const data = { profile, prefs, skills: profile?.skills || [] }
       localStorage.setItem('iq_user', JSON.stringify(data))
       router.push('/dashboard')
-    } catch (err: any) {
-      alert(err.message || 'Failed to save onboarding preferences')
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Failed to save onboarding preferences')
     }
   }
 
@@ -266,6 +281,7 @@ export default function OnboardingPage() {
                   experience: [{ role: 'Data Automation Intern', company: 'Bitzure', duration: '3 months', bullets: ['Processed 25K+ records', 'Improved efficiency ~60%'] }],
                   projects: [{ name: 'Surge Price Prediction', description: 'LightGBM + ExtraTreesRegressor model', tech: ['Python', 'LightGBM', 'Streamlit'] }],
                   certifications: [],
+                  achievements: [],
                   links: { github: 'github.com/aarav', portfolio: 'aarupadaiyar.netlify.app' }
                 })
                 setStep(1)
@@ -281,6 +297,24 @@ export default function OnboardingPage() {
           <div className="fade-up">
             <h1 className="font-display" style={{ fontSize: 36, fontWeight: 900, textTransform: 'uppercase', marginBottom: '0.5rem' }}>Review your profile</h1>
             <p style={{ color: 'var(--text-2)', fontWeight: 700, marginBottom: '2rem' }}>AI extracted this from your resume. <strong style={{color:'var(--indigo)'}}>Click any field to edit it.</strong></p>
+
+            {(missingFields.length > 0 || lowConfidenceFields.length > 0) && (
+              <div className="neo-card" style={{ padding: '1rem', marginBottom: '1.5rem', background: 'var(--amber-dim)', borderColor: 'var(--amber)' }}>
+                <div style={{ fontSize: 12, color: 'var(--text)', fontFamily: 'Space Grotesk', fontWeight: 900, textTransform: 'uppercase', marginBottom: 6 }}>
+                  Review needed
+                </div>
+                {missingFields.length > 0 && (
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 700, marginBottom: 4 }}>
+                    Missing: {missingFields.join(', ')}
+                  </div>
+                )}
+                {lowConfidenceFields.length > 0 && (
+                  <div style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 700 }}>
+                    Low confidence: {lowConfidenceFields.join(', ')}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Name & Email */}
             <div className="neo-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>

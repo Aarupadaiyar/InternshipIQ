@@ -108,6 +108,8 @@ export default function JobsPage() {
   const [allSources, setAllSources] = useState<{value: string; label: string}[]>([])
   const [allLocations, setAllLocations] = useState<string[]>([])
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [relatedFilters, setRelatedFilters] = useState<{ skills: string[]; domains: string[] }>({ skills: [], domains: [] })
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const limit = 30
@@ -218,6 +220,25 @@ export default function JobsPage() {
     setFilters(next)
     setPage(1)
     loadJobs(next, 1, false)
+
+    if (typeof updates.search === 'string') {
+      const q = updates.search.trim()
+      if (q.length > 0) {
+        fetch(`/api/jobs/autocomplete?q=${encodeURIComponent(q)}&limit=6`)
+          .then(r => r.json())
+          .then(data => {
+            setSuggestions(data.suggestions || [])
+            setRelatedFilters(data.relatedFilters || { skills: [], domains: [] })
+          })
+          .catch(() => {
+            setSuggestions([])
+            setRelatedFilters({ skills: [], domains: [] })
+          })
+      } else {
+        setSuggestions([])
+        setRelatedFilters({ skills: [], domains: [] })
+      }
+    }
   }
 
   const clearAllFilters = () => {
@@ -265,13 +286,36 @@ export default function JobsPage() {
 
             {/* ── Row 1: Search + Company + Domain ── */}
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 10 }}>
-              <input
-                value={filters.search}
-                onChange={e => handleFilterChange({ search: e.target.value })}
-                placeholder="SEARCH KEYWORDS..."
-                className="neo-input"
-                style={{ flex: '3 1 220px', height: '48px', textTransform: 'uppercase' }}
-              />
+              <div style={{ flex: '3 1 220px', position: 'relative' }}>
+                <input
+                  value={filters.search}
+                  onChange={e => handleFilterChange({ search: e.target.value })}
+                  placeholder="SEARCH KEYWORDS..."
+                  className="neo-input"
+                  style={{ width: '100%', height: '48px', textTransform: 'uppercase' }}
+                />
+                {suggestions.length > 0 && (
+                  <div className="neo-card" style={{ position: 'absolute', left: 0, right: 0, top: 54, padding: 8, background: 'var(--bg-2)', zIndex: 30 }}>
+                    {suggestions.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          setSuggestions([])
+                          handleFilterChange({ search: s })
+                        }}
+                        style={{ display: 'block', width: '100%', textAlign: 'left', background: 'transparent', border: 0, color: 'var(--text)', padding: '8px 10px', cursor: 'pointer', fontWeight: 900, textTransform: 'uppercase' }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                    {(relatedFilters.skills.length > 0 || relatedFilters.domains.length > 0) && (
+                      <div style={{ borderTop: '2px solid var(--border)', marginTop: 6, paddingTop: 8, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {[...relatedFilters.skills, ...relatedFilters.domains].slice(0, 6).map(f => <span key={f} className="tag tag-skill">{f}</span>)}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <input
                 value={filters.company}
                 onChange={e => handleFilterChange({ company: e.target.value })}

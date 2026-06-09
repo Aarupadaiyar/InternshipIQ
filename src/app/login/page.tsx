@@ -74,18 +74,18 @@ export default function LoginPage() {
 
     if (provider === 'google') {
       if (googleClientId === 'mock' || googleClientId === '') {
-        router.push(`/auth/callback/google?code=mock_code_google`);
-      } else {
-        const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile`;
-        window.location.href = authUrl;
+        setError('Google OAuth is not configured. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID.')
+        return
       }
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&prompt=select_account`;
+      window.location.href = authUrl;
     } else {
       if (githubClientId === 'mock' || githubClientId === '') {
-        router.push(`/auth/callback/github?code=mock_code_github`);
-      } else {
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`;
-        window.location.href = authUrl;
+        setError('GitHub OAuth is not configured. Set NEXT_PUBLIC_GITHUB_CLIENT_ID.')
+        return
       }
+      const authUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`;
+      window.location.href = authUrl;
     }
   }
 

@@ -14,6 +14,7 @@ from app.models.job_source import JobSource
 from app.models.source import Source
 from app.models.rejection_log import RejectionLog
 from app.schemas.job import JobResponse, JobPaginatedResponse, MatchBreakdown
+from app.utils.search_engine import autocomplete, expand_query, related_filters, score_job
 
 router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
@@ -206,41 +207,12 @@ async def get_jobs(
     suggested_searches = None
     suggested_domains = None
     suggested_keywords = None
+    related_filter_suggestions = None
+    search_scores = {}
 
     if search:
         query = search.strip().lower()
-
-        # Typo correction
-        TYPO_CORRECTIONS = {
-            "googel": "google",
-            "microsft": "microsoft",
-            "pythn": "python",
-            "machin learnng": "machine learning",
-            "pwer bi": "power bi"
-        }
-        if query in TYPO_CORRECTIONS:
-            query = TYPO_CORRECTIONS[query]
-
-        # Alias expansion
-        ALIASES = {
-            "ml": ["machine learning", "ai / ml"],
-            "ai": ["artificial intelligence", "ai / ml"],
-            "ds": ["data science"],
-            "swe": ["software engineer", "software development"],
-            "sde": ["software development engineer", "software developer"],
-            "nlp": ["natural language processing"],
-            "cv": ["computer vision"],
-            "bi": ["business intelligence"],
-            "pm": ["product manager", "product management"],
-            "qa": ["quality assurance", "test engineer"],
-            "fe": ["frontend", "front-end"],
-            "be": ["backend", "back-end"],
-            "fs": ["full stack", "fullstack"]
-        }
-
-        search_terms = [query]
-        if query in ALIASES:
-            search_terms.extend(ALIASES[query])
+        search_terms = expand_query(query)
 
         def levenshtein(s1: str, s2: str) -> int:
             if len(s1) < len(s2):
@@ -274,19 +246,16 @@ async def get_jobs(
             return False
 
         filtered_jobs = []
-        search_scores = {}
-
         for job in all_jobs:
-            title_lower = job.title.lower()
-            company_lower = job.company.lower()
-            skills_lower = [s.lower() for s in job.required_skills]
-            desc_lower = job.description.lower()
-            location_lower = job.location.lower()
-            domain_lower = job.domain.lower()
-            source_lower = job.source.lower()
-
-            score = 0
+            score = score_job(job, query)
             for term in search_terms:
+                title_lower = job.title.lower()
+                company_lower = job.company.lower()
+                skills_lower = [s.lower() for s in job.required_skills]
+                desc_lower = job.description.lower()
+                location_lower = job.location.lower()
+                domain_lower = job.domain.lower()
+                source_lower = job.source.lower()
                 if term == title_lower:
                     score += 100
                 elif title_lower.startswith(term):
@@ -335,6 +304,7 @@ async def get_jobs(
 
         filtered_jobs.sort(key=lambda j: search_scores.get(j.id, 0), reverse=True)
         all_jobs = filtered_jobs
+        related_filter_suggestions = related_filters(query)
 
         if not all_jobs:
             suggested_searches = ["Software Engineer", "Frontend", "Data Science", "Machine Learning", "Product Manager"]
@@ -379,8 +349,12 @@ async def get_jobs(
             "skillGaps": skill_gaps
         })
 
-    # Sort globally by posted date descending
-    jobs_list.sort(key=lambda j: j["postedAt"] or "", reverse=True)
+    if search:
+        jobs_list.sort(key=lambda j: search_scores.get(j["id"], 0), reverse=True)
+    elif user_skills_list:
+        jobs_list.sort(key=lambda j: ((j["matchScore"] or 0), j["postedAt"] or ""), reverse=True)
+    else:
+        jobs_list.sort(key=lambda j: j["postedAt"] or "", reverse=True)
 
     total = len(jobs_list)
     start_idx = (page - 1) * limit
@@ -425,7 +399,16 @@ async def get_jobs(
         "suggestedSearches": suggested_searches,
         "suggestedDomains": suggested_domains,
         "suggestedKeywords": suggested_keywords,
+        "relatedFilters": related_filter_suggestions,
     }
+
+
+@router.get("/autocomplete", summary="Autocomplete job searches")
+async def autocomplete_jobs(
+    q: str = Query("", description="Search prefix"),
+    limit: int = Query(8, ge=1, le=20),
+):
+    return {"suggestions": autocomplete(q, limit=limit), "relatedFilters": related_filters(q)}
 
 
 # ── Analytics — queries Source registry table ─────────────────────────────────

@@ -30,6 +30,9 @@ class ResumeResponse(BaseModel):
 class EducationItem(BaseModel):
     degree: str = Field(default="", examples=["B.Tech Computer Science"])
     institution: str = Field(default="", examples=["Lovely Professional University"])
+    branch: Optional[str] = Field(default=None, examples=["Computer Science"])
+    university: Optional[str] = Field(default=None, examples=["Lovely Professional University"])
+    cgpa: Optional[str] = Field(default=None, examples=["8.21"])
     year: Optional[str] = Field(default=None, examples=["2025"])
 
 
@@ -44,6 +47,8 @@ class ProjectItem(BaseModel):
     name: str = Field(default="", examples=["Surge Price Prediction"])
     description: str = Field(default="", examples=["LightGBM + ExtraTreesRegressor model"])
     tech: list[str] = Field(default_factory=list, examples=[["Python", "LightGBM"]])
+    technologies: list[str] = Field(default_factory=list)
+    github: Optional[str] = None
 
 
 # ── Resume Profile Schemas ────────────────────────────────────────────────────
@@ -58,6 +63,7 @@ class ResumeProfileCreate(BaseModel):
     technologies: list[str] = Field(default_factory=list)
     education: list[EducationItem] = Field(default_factory=list)
     certifications: list[str] = Field(default_factory=list)
+    achievements: list[str] = Field(default_factory=list)
     experience: list[ExperienceItem] = Field(default_factory=list)
     links: dict = Field(default_factory=dict)
     raw_text: Optional[str] = None
@@ -73,6 +79,7 @@ class ResumeProfileResponse(BaseModel):
     technologies: list[Any]
     education: list[Any]
     certifications: list[Any]
+    achievements: list[Any] = Field(default_factory=list)
     experience: list[Any]
     links: dict
     parsed_at: datetime

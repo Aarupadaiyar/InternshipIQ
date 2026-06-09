@@ -65,5 +65,5 @@ class JobPaginatedResponse(BaseModel):
     suggestedSearches: Optional[List[str]] = None
     suggestedDomains: Optional[List[str]] = None
     suggestedKeywords: Optional[List[str]] = None
-
+    relatedFilters: Optional[dict] = None
 

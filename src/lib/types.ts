@@ -1,12 +1,16 @@
 export interface ParsedProfile {
   name: string
   email: string
+  phone?: string
   skills: string[]
-  education: { degree: string; institution: string; year?: string }[]
-  experience: { role: string; company: string; duration?: string; bullets?: string[] }[]
-  projects: { name: string; description: string; tech: string[] }[]
+  skillsByCategory?: Record<string, string[]>
+  education: { degree: string; branch?: string; institution: string; university?: string; cgpa?: string; year?: string }[]
+  experience: { role: string; company: string; duration?: string; description?: string; bullets?: string[] }[]
+  projects: { name: string; description: string; tech: string[]; technologies?: string[]; github?: string }[]
   certifications: string[]
+  achievements?: string[]
   links: { github?: string; linkedin?: string; portfolio?: string }
+  confidence?: Record<string, { value: unknown; confidence: number; evidence?: string }>
 }
 
 export interface Job {

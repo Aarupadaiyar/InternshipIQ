@@ -34,6 +34,7 @@ class ResumeProfileRepository:
             technologies=data.technologies,
             education=[e.model_dump() for e in data.education],
             certifications=data.certifications,
+            achievements=data.achievements,
             experience=[ex.model_dump() for ex in data.experience],
             links=data.links,
             raw_text=data.raw_text,
@@ -54,6 +55,7 @@ class ResumeProfileRepository:
         profile.technologies = data.technologies
         profile.education = [e.model_dump() for e in data.education]
         profile.certifications = data.certifications
+        profile.achievements = data.achievements
         profile.experience = [ex.model_dump() for ex in data.experience]
         profile.links = data.links
         if data.raw_text is not None:

@@ -59,6 +59,9 @@ class ResumeProfile(Base):
     certifications: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
     # e.g. ["AWS Certified", "Google Cloud Associate"]
 
+    achievements: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    # e.g. ["Winner of Smart India Hackathon", "Dean's list"]
+
     experience: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
     # e.g. [{"role": "Intern", "company": "...", "duration": "3 months", "bullets": [...]}]
 

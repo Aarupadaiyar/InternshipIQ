@@ -88,7 +88,7 @@ function CallbackContent() {
       ) : (
         <div>
           <p style={{ color: 'var(--text-2)', fontSize: 14, fontWeight: 700, marginBottom: 24 }}>
-            Verifying credentials with {provider === 'google' ? 'Google' : 'GitHub'} sandbox...
+            Verifying credentials with {provider === 'google' ? 'Google' : 'GitHub'}...
           </p>
           <div className="animate-pulse" style={{ display: 'inline-flex', gap: 8 }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--indigo)', animation: 'bounce 0.6s infinite alternate' }} />

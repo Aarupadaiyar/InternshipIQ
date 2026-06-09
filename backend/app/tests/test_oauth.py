@@ -78,65 +78,19 @@ async def test_oauth_user_repository_flow():
             await engine.dispose()
 
 @pytest.mark.anyio
-async def test_auth_service_google_sandbox_login():
-    """Verify Google sandbox/mock login triggers correctly and returns TokenResponse."""
+async def test_auth_service_rejects_google_mock_login():
+    """Verify mock Google OAuth codes are disabled."""
     async with AsyncSessionLocal() as session:
         auth_service = AuthService(session)
-        test_email = "mock_google_user@example.com"
-        
-        # Ensure cleanup
-        repo = UserRepository(session)
-        existing = await repo.get_by_email(test_email)
-        if existing:
-            await session.delete(existing)
-            await session.commit()
-            
-        try:
-            # Google sandbox login
-            res = await auth_service.login_google(code="mock_code_google", redirect_uri="")
-            await session.commit()
-            
-            assert res.access_token is not None
-            assert res.refresh_token is not None
-            assert res.user.email == test_email
-            assert res.user.full_name == "Google Sandbox User"
-            
-        finally:
-            cleanup_user = await repo.get_by_email(test_email)
-            if cleanup_user:
-                await session.delete(cleanup_user)
-                await session.commit()
-            
-            await engine.dispose()
+        with pytest.raises(Exception):
+            await auth_service.login_google(code="mock_code_google", redirect_uri="")
+        await engine.dispose()
 
 @pytest.mark.anyio
-async def test_auth_service_github_sandbox_login():
-    """Verify GitHub sandbox/mock login triggers correctly and returns TokenResponse."""
+async def test_auth_service_rejects_github_mock_login():
+    """Verify mock GitHub OAuth codes are disabled."""
     async with AsyncSessionLocal() as session:
         auth_service = AuthService(session)
-        test_email = "mock_github_user@example.com"
-        
-        # Ensure cleanup
-        repo = UserRepository(session)
-        existing = await repo.get_by_email(test_email)
-        if existing:
-            await session.delete(existing)
-            await session.commit()
-            
-        try:
-            # GitHub sandbox login
-            res = await auth_service.login_github(code="mock_code_github", redirect_uri="")
-            await session.commit()
-            
-            assert res.access_token is not None
-            assert res.refresh_token is not None
-            assert res.user.email == test_email
-            assert res.user.full_name == "GitHub Sandbox User"
-            
-        finally:
-            cleanup_user = await repo.get_by_email(test_email)
-            if cleanup_user:
-                await session.delete(cleanup_user)
-                await session.commit()
-            
-            await engine.dispose()
+        with pytest.raises(Exception):
+            await auth_service.login_github(code="mock_code_github", redirect_uri="")
+        await engine.dispose()
