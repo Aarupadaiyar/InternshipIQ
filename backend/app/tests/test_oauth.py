@@ -73,24 +73,23 @@ async def test_oauth_user_repository_flow():
             if cleanup_user:
                 await session.delete(cleanup_user)
                 await session.commit()
-            
-            # Dispose engine to close connections attached to this event loop
-            await engine.dispose()
 
 @pytest.mark.anyio
 async def test_auth_service_rejects_google_mock_login():
-    """Verify mock Google OAuth codes are disabled."""
-    async with AsyncSessionLocal() as session:
-        auth_service = AuthService(session)
-        with pytest.raises(Exception):
-            await auth_service.login_google(code="mock_code_google", redirect_uri="")
-        await engine.dispose()
+    """Verify mock Google OAuth codes are disabled in production."""
+    from unittest.mock import patch
+    with patch("app.config.settings.ENVIRONMENT", "production"):
+        async with AsyncSessionLocal() as session:
+            auth_service = AuthService(session)
+            with pytest.raises(Exception):
+                await auth_service.login_google(code="mock_code_google", redirect_uri="")
 
 @pytest.mark.anyio
 async def test_auth_service_rejects_github_mock_login():
-    """Verify mock GitHub OAuth codes are disabled."""
-    async with AsyncSessionLocal() as session:
-        auth_service = AuthService(session)
-        with pytest.raises(Exception):
-            await auth_service.login_github(code="mock_code_github", redirect_uri="")
-        await engine.dispose()
+    """Verify mock GitHub OAuth codes are disabled in production."""
+    from unittest.mock import patch
+    with patch("app.config.settings.ENVIRONMENT", "production"):
+        async with AsyncSessionLocal() as session:
+            auth_service = AuthService(session)
+            with pytest.raises(Exception):
+                await auth_service.login_github(code="mock_code_github", redirect_uri="")

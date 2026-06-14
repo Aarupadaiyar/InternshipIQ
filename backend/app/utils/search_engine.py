@@ -5,22 +5,46 @@ import re
 from datetime import datetime, timezone
 from typing import Iterable
 
+# Typo tolerance dictionary
+TYPOS: dict[str, str] = {
+    "googel": "google",
+    "microsft": "microsoft",
+    "pythn": "python",
+    "machin learnng": "machine learning",
+    "pwer bi": "power bi",
+}
 
+# Alias dictionary (bi-directional mapping support)
 SYNONYMS: dict[str, list[str]] = {
-    "ml": ["machine learning", "ml engineer", "mle", "ai / ml", "pytorch", "tensorflow"],
-    "mle": ["machine learning engineer", "machine learning", "ai engineer"],
-    "ai": ["artificial intelligence", "ai engineer", "machine learning", "llm", "generative ai"],
-    "ai eng": ["ai engineer", "machine learning engineer", "llm engineer"],
-    "pm": ["product manager", "program manager", "product management"],
-    "swe": ["software engineer", "software developer", "sde"],
-    "sde": ["software development engineer", "software engineer", "backend", "frontend"],
+    # Short -> Long
+    "ml": ["machine learning", "ml engineer", "ai / ml"],
+    "ai": ["artificial intelligence", "ai engineer", "machine learning"],
     "ds": ["data science", "data scientist"],
-    "nlp": ["natural language processing", "transformers", "llm"],
+    "swe": ["software engineer", "software developer", "sde"],
+    "sde": ["software development engineer", "software engineer", "sde intern"],
+    "nlp": ["natural language processing", "ai"],
     "cv": ["computer vision", "opencv"],
-    "backend": ["backend developer", "server-side", "api", "fastapi", "node.js"],
-    "frontend": ["frontend developer", "react", "next.js", "ui developer"],
-    "machine learn": ["machine learning"],
-    "machin learnng": ["machine learning"],
+    "bi": ["business intelligence", "power bi", "tableau"],
+    "pm": ["product manager", "product management", "program manager"],
+    "qa": ["quality assurance", "qa engineer", "testing"],
+    "fe": ["frontend", "frontend developer", "react"],
+    "be": ["backend", "backend developer", "server-side"],
+    "fs": ["full stack", "fullstack", "full stack developer"],
+    # Long -> Short
+    "machine learning": ["ml", "ai / ml"],
+    "artificial intelligence": ["ai"],
+    "data science": ["ds"],
+    "software engineer": ["swe", "sde"],
+    "software development engineer": ["sde", "swe"],
+    "natural language processing": ["nlp"],
+    "computer vision": ["cv"],
+    "business intelligence": ["bi", "power bi"],
+    "product manager": ["pm"],
+    "quality assurance": ["qa"],
+    "frontend": ["fe"],
+    "backend": ["be"],
+    "full stack": ["fs"],
+    "power bi": ["pwer bi", "bi"],
 }
 
 AUTOCOMPLETE_TERMS = sorted(set([
@@ -46,11 +70,24 @@ def normalize_query(query: str) -> str:
     return re.sub(r"\s+", " ", query.lower().strip())
 
 
+def correct_typos(query: str) -> str:
+    """Corrects known typos in the search query."""
+    q = normalize_query(query)
+    for typo, correction in TYPOS.items():
+        q = re.sub(r"\b" + re.escape(typo) + r"\b", correction, q)
+    return q
+
+
 def expand_query(query: str) -> list[str]:
-    normalized = normalize_query(query)
-    terms = {normalized}
+    """Corrects typos and expands search query with synonyms and aliases."""
+    corrected = correct_typos(query)
+    terms = {corrected}
+    # Check exact matching key
+    if corrected in SYNONYMS:
+        terms.update(SYNONYMS[corrected])
+    # Check substring mapping
     for key, values in SYNONYMS.items():
-        if normalized == key or normalized in key or key in normalized:
+        if corrected == key or corrected in key or key in corrected:
             terms.update(values)
     return [term for term in terms if term]
 

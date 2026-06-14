@@ -8,7 +8,6 @@ import uuid
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from app.models.resume import Resume
 from app.models.resume_profile import ResumeProfile
@@ -38,6 +37,11 @@ class ResumeProfileRepository:
             experience=[ex.model_dump() for ex in data.experience],
             links=data.links,
             raw_text=data.raw_text,
+            career_recommendations=data.career_recommendations,
+            soft_skills=data.soft_skills,
+            experience_signals=data.experience_signals,
+            achievement_signals=data.achievement_signals,
+            locations=data.locations,
         )
         self.db.add(profile)
         await self.db.flush()
@@ -58,6 +62,11 @@ class ResumeProfileRepository:
         profile.achievements = data.achievements
         profile.experience = [ex.model_dump() for ex in data.experience]
         profile.links = data.links
+        profile.career_recommendations = data.career_recommendations
+        profile.soft_skills = data.soft_skills
+        profile.experience_signals = data.experience_signals
+        profile.achievement_signals = data.achievement_signals
+        profile.locations = data.locations
         if data.raw_text is not None:
             profile.raw_text = data.raw_text
         await self.db.flush()

@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
@@ -16,7 +18,7 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('http://localhost:8000/auth/login', {
+      const res = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -24,7 +26,17 @@ export default function LoginPage() {
 
       const data = await res.json()
       if (!res.ok) {
-        throw new Error(data.detail || 'Login failed')
+        let errMsg = 'Login failed'
+        if (data && data.detail) {
+          if (typeof data.detail === 'string') {
+            errMsg = data.detail
+          } else if (Array.isArray(data.detail)) {
+            errMsg = data.detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ')
+          } else if (typeof data.detail === 'object') {
+            errMsg = JSON.stringify(data.detail)
+          }
+        }
+        throw new Error(errMsg)
       }
 
       localStorage.setItem('token', data.access_token)
@@ -32,7 +44,7 @@ export default function LoginPage() {
       localStorage.setItem('user_email', email)
       
       // Attempt to load profile from backend, or redirect to onboarding
-      const userRes = await fetch('http://localhost:8000/auth/me', {
+      const userRes = await fetch(`${API_BASE}/auth/me`, {
         headers: { 'Authorization': `Bearer ${data.access_token}` }
       })
       
@@ -41,17 +53,18 @@ export default function LoginPage() {
         localStorage.setItem('user_name', userData.full_name)
         
         // Fetch dashboard data to see if onboarding is completed
-        const dashRes = await fetch('http://localhost:8000/dashboard/profile', {
+        const dashRes = await fetch(`${API_BASE}/dashboard/profile`, {
           headers: { 'Authorization': `Bearer ${data.access_token}` }
         })
         
         if (dashRes.ok) {
           const dashData = await dashRes.json()
-          if (dashData.profile) {
+          const resumeProfile = dashData.resume_profile
+          if (resumeProfile) {
             localStorage.setItem('iq_user', JSON.stringify({
-              profile: dashData.profile,
+              profile: resumeProfile,
               prefs: dashData.preferences || { roles: [], domains: [], locations: [], remote: 'any' },
-              skills: dashData.profile.skills || []
+              skills: resumeProfile.skills || []
             }))
             router.push('/dashboard')
             return
@@ -60,8 +73,9 @@ export default function LoginPage() {
       }
       
       router.push('/onboarding')
-    } catch (err: any) {
-      setError(err.message || 'Network connection failed')
+    } catch (err: unknown) {
+      console.error('Login error:', err)
+      setError(err instanceof Error ? err.message : 'Network connection failed')
     } finally {
       setLoading(false)
     }
@@ -72,16 +86,21 @@ export default function LoginPage() {
     const githubClientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 'mock';
     const redirectUri = `${window.location.origin}/auth/callback/${provider}`;
 
+    const isGoogleMock = googleClientId === 'mock' || googleClientId === '' || googleClientId.startsWith('your-google-')
+    const isGithubMock = githubClientId === 'mock' || githubClientId === '' || githubClientId.startsWith('your-github-')
+
     if (provider === 'google') {
-      if (googleClientId === 'mock' || googleClientId === '') {
-        setError('Google OAuth is not configured. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID.')
+      if (isGoogleMock) {
+        console.warn('Google Client ID is not configured. Redirecting to development sandbox login.')
+        router.push(`/auth/sandbox?provider=google`)
         return
       }
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&prompt=select_account`;
       window.location.href = authUrl;
     } else {
-      if (githubClientId === 'mock' || githubClientId === '') {
-        setError('GitHub OAuth is not configured. Set NEXT_PUBLIC_GITHUB_CLIENT_ID.')
+      if (isGithubMock) {
+        console.warn('GitHub Client ID is not configured. Redirecting to development sandbox login.')
+        router.push(`/auth/sandbox?provider=github`)
         return
       }
       const authUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`;

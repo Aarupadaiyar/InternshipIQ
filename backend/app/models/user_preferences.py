@@ -70,6 +70,12 @@ class UserPreferences(Base):
     notification_whatsapp: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     notification_in_app: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    notification_preferences: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
+    email_digest_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    digest_time: Mapped[str] = mapped_column(String(50), default="09:00 AM", nullable=False)
+    timezone: Mapped[str] = mapped_column(String(100), default="UTC", nullable=False)
+    preferred_job_types: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+
     # ── Timestamp ─────────────────────────────────────────────────────────────
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -1,15 +1,9 @@
 from __future__ import annotations
 from typing import Optional
-
-"""
-ResumeProfile model — stores structured data extracted from a resume.
-All extracted fields are stored as JSONB for maximum flexibility.
-This table is ready for AI parsing integration without schema changes.
-"""
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Text, func
+from sqlalchemy import DateTime, ForeignKey, Index, Text, func, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -17,7 +11,7 @@ from app.database.base_class import Base
 
 
 class ResumeProfile(Base):
-    __tablename__ = "resume_profiles"
+    __tablename__ = "user_profiles"
 
     # ── Primary Key ───────────────────────────────────────────────────────────
     id: Mapped[uuid.UUID] = mapped_column(
@@ -29,7 +23,7 @@ class ResumeProfile(Base):
     # ── Foreign Keys ─────────────────────────────────────────────────────────
     resume_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("resumes.id", ondelete="CASCADE"),
+        ForeignKey("user_resumes.id", ondelete="CASCADE"),
         nullable=False,
         unique=True,   # One profile per resume
     )
@@ -40,10 +34,14 @@ class ResumeProfile(Base):
         index=True,
     )
 
-    # ── Extracted Data (JSONB) ─────────────────────────────────────────────────
-    # Each field stores a list of structured objects or primitives.
-    # Schemas are defined in app/schemas/resume.py.
+    # ── Profiles Fields (from specs) ──────────────────────────────────────────
+    career_interests: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    locations: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    preferred_domains: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    experience_level: Mapped[str] = mapped_column(String(50), default="0 Years", nullable=False)
+    resume_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
 
+    # ── Extracted Data (JSONB) ─────────────────────────────────────────────────
     skills: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
     # e.g. ["Python", "FastAPI", "PostgreSQL"]
 
@@ -68,9 +66,21 @@ class ResumeProfile(Base):
     links: Mapped[dict] = mapped_column(JSONB, default=dict, nullable=False)
     # e.g. {"github": "...", "linkedin": "...", "portfolio": "..."}
 
+    career_recommendations: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    # e.g. ["Frontend Developer", "Backend Developer"]
+
+    soft_skills: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    # e.g. ["Leadership", "Communication"]
+
+    experience_signals: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    # e.g. ["Club President", "Community Leader"]
+
+    achievement_signals: Mapped[list] = mapped_column(JSONB, default=list, nullable=False)
+    # e.g. ["Hackathon Winner", "Research Publication"]
+
     # ── Raw Text ──────────────────────────────────────────────────────────────
     # Stored for future AI re-parsing without requiring re-upload
-    raw_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    raw_text: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # ── Timestamp ─────────────────────────────────────────────────────────────
     parsed_at: Mapped[datetime] = mapped_column(
@@ -88,7 +98,7 @@ class ResumeProfile(Base):
 
     # ── Indexes ───────────────────────────────────────────────────────────────
     __table_args__ = (
-        Index("ix_resume_profiles_user_id", "user_id"),
+        Index("ix_user_profiles_user_id", "user_id"),
     )
 
     def __repr__(self) -> str:

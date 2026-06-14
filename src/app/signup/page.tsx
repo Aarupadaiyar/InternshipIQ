@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
 export default function SignupPage() {
   const router = useRouter()
   const [fullName, setFullName] = useState('')
@@ -18,7 +20,7 @@ export default function SignupPage() {
 
     try {
       // 1. Register
-      const registerRes = await fetch('http://localhost:8000/auth/register', {
+      const registerRes = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, full_name: fullName }),
@@ -26,11 +28,21 @@ export default function SignupPage() {
 
       const registerData = await registerRes.json()
       if (!registerRes.ok) {
-        throw new Error(registerData.detail || 'Registration failed')
+        let errMsg = 'Registration failed'
+        if (registerData && registerData.detail) {
+          if (typeof registerData.detail === 'string') {
+            errMsg = registerData.detail
+          } else if (Array.isArray(registerData.detail)) {
+            errMsg = registerData.detail.map((err: any) => err.msg || JSON.stringify(err)).join(', ')
+          } else if (typeof registerData.detail === 'object') {
+            errMsg = JSON.stringify(registerData.detail)
+          }
+        }
+        throw new Error(errMsg)
       }
 
       // 2. Automatically log in after registration
-      const loginRes = await fetch('http://localhost:8000/auth/login', {
+      const loginRes = await fetch(`${API_BASE}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -48,8 +60,9 @@ export default function SignupPage() {
       localStorage.removeItem('iq_user') // Clear local storage caches for clean onboarding
 
       router.push('/onboarding')
-    } catch (err: any) {
-      setError(err.message || 'Network connection failed')
+    } catch (err: unknown) {
+      console.error('Signup error:', err)
+      setError(err instanceof Error ? err.message : 'Network connection failed')
     } finally {
       setLoading(false)
     }
@@ -59,16 +72,21 @@ export default function SignupPage() {
     const githubClientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 'mock';
     const redirectUri = `${window.location.origin}/auth/callback/${provider}`;
 
+    const isGoogleMock = googleClientId === 'mock' || googleClientId === '' || googleClientId.startsWith('your-google-')
+    const isGithubMock = githubClientId === 'mock' || githubClientId === '' || githubClientId.startsWith('your-github-')
+
     if (provider === 'google') {
-      if (googleClientId === 'mock' || googleClientId === '') {
-        setError('Google OAuth is not configured. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID.')
+      if (isGoogleMock) {
+        console.warn('Google Client ID is not configured. Redirecting to development sandbox login.')
+        router.push(`/auth/sandbox?provider=google`)
         return
       }
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&prompt=select_account`;
       window.location.href = authUrl;
     } else {
-      if (githubClientId === 'mock' || githubClientId === '') {
-        setError('GitHub OAuth is not configured. Set NEXT_PUBLIC_GITHUB_CLIENT_ID.')
+      if (isGithubMock) {
+        console.warn('GitHub Client ID is not configured. Redirecting to development sandbox login.')
+        router.push(`/auth/sandbox?provider=github`)
         return
       }
       const authUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`;

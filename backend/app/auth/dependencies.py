@@ -61,3 +61,15 @@ async def get_current_active_user(
 ) -> User:
     """Alias dependency that explicitly names the active-user requirement."""
     return current_user
+
+
+async def get_current_admin_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """FastAPI dependency to ensure the user is an administrator."""
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Operation not permitted. Administrator privileges required.",
+        )
+    return current_user

@@ -6,11 +6,15 @@ export interface ParsedProfile {
   skillsByCategory?: Record<string, string[]>
   education: { degree: string; branch?: string; institution: string; university?: string; cgpa?: string; year?: string }[]
   experience: { role: string; company: string; duration?: string; description?: string; bullets?: string[] }[]
-  projects: { name: string; description: string; tech: string[]; technologies?: string[]; github?: string }[]
+  projects: { name: string; description: string; tech: string[]; technologies?: string[]; github?: string; deployment?: string }[]
   certifications: string[]
   achievements?: string[]
   links: { github?: string; linkedin?: string; portfolio?: string }
   confidence?: Record<string, { value: unknown; confidence: number; evidence?: string }>
+  career_recommendations?: string[]
+  soft_skills?: string[]
+  experience_signals?: string[]
+  achievement_signals?: string[]
 }
 
 export interface Job {

@@ -141,3 +141,107 @@ async def github_login(
     return await auth_service.login_github(data.code, data.redirect_uri)
 
 
+@router.post(
+    "/email-webhook",
+    summary="Email provider webhook receiver for Resend and SendGrid tracking",
+)
+async def email_webhook(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Receives tracking webhook payloads from Resend or SendGrid.
+    Updates digest_logs with timestamps: delivered_at, opened_at, clicked_at.
+    """
+    import json
+    import uuid
+    from datetime import datetime, timezone
+    from sqlalchemy import select
+    from app.models.subscription import EmailDigestLog
+
+    body = await request.body()
+    try:
+        payload = json.loads(body.decode("utf-8"))
+    except Exception as e:
+        return {"status": "error", "message": f"Invalid JSON: {str(e)}"}
+
+    events = []
+    if isinstance(payload, list):
+        events = payload
+    elif isinstance(payload, dict):
+        events = [payload]
+    else:
+        return {"status": "ignored", "message": "Unknown payload structure"}
+
+    processed_count = 0
+    for evt in events:
+        digest_log_id = None
+        event_name = None
+        recipient_email = None
+        
+        # 1. Parse Resend structure
+        if "type" in evt and "data" in evt:
+            event_name = evt["type"]
+            data = evt["data"]
+            tags = data.get("tags", {})
+            if isinstance(tags, dict):
+                digest_log_id = tags.get("digest_log_id")
+            elif isinstance(tags, list):
+                for tag in tags:
+                    if tag.get("name") == "digest_log_id":
+                        digest_log_id = tag.get("value")
+                        break
+            recipient_email = data.get("to", [None])[0] if data.get("to") else None
+            
+        # 2. Parse SendGrid structure
+        elif "event" in evt:
+            event_name = evt["event"]
+            digest_log_id = evt.get("digest_log_id")
+            recipient_email = evt.get("email")
+            
+        if not digest_log_id and not recipient_email:
+            continue
+
+        log_record = None
+        if digest_log_id:
+            try:
+                log_uuid = uuid.UUID(digest_log_id)
+                stmt = select(EmailDigestLog).where(EmailDigestLog.id == log_uuid)
+                res = await db.execute(stmt)
+                log_record = res.scalar_one_or_none()
+            except Exception:
+                pass
+                
+        if not log_record and recipient_email:
+            stmt = select(EmailDigestLog).where(
+                EmailDigestLog.recipient_email == recipient_email
+            ).order_by(EmailDigestLog.sent_at.desc())
+            res = await db.execute(stmt)
+            log_record = res.scalars().first()
+
+        if log_record:
+            now_tz = datetime.now(timezone.utc)
+            event_clean = event_name.lower().replace("email.", "")
+            
+            if event_clean in ["delivered", "deliver"]:
+                log_record.delivered_at = now_tz
+                log_record.status = "delivered"
+            elif event_clean in ["opened", "open"]:
+                log_record.opened_at = now_tz
+                log_record.status = "opened"
+            elif event_clean in ["clicked", "click"]:
+                log_record.clicked_at = now_tz
+                log_record.status = "clicked"
+            elif event_clean in ["bounced", "bounce", "dropped", "failed"]:
+                log_record.status = "failed"
+                log_record.error_message = f"Webhook reported event: {event_name}"
+                
+            db.add(log_record)
+            processed_count += 1
+
+    if processed_count > 0:
+        await db.commit()
+
+    return {"status": "success", "processed_events": processed_count}
+
+

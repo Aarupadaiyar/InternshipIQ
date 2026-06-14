@@ -38,6 +38,7 @@ export default function ProfilePage() {
           experience: dashData.resume_profile.experience || [],
           projects: dashData.resume_profile.projects || [],
           certifications: dashData.resume_profile.certifications || [],
+          achievements: dashData.resume_profile.achievements || [],
           links: dashData.resume_profile.links || {}
         }
         setProfile(p)
@@ -77,6 +78,7 @@ export default function ProfilePage() {
           technologies: updated.skills,
           education: updated.education,
           certifications: updated.certifications,
+          achievements: updated.achievements || [],
           experience: updated.experience,
           links: updated.links
         })
@@ -222,9 +224,37 @@ export default function ProfilePage() {
               <div key={i} style={{ marginBottom: '1.25rem', paddingBottom: '1.25rem', borderBottom: i < profile.projects.length - 1 ? '2px solid var(--border)' : 'none' }}>
                 <div style={{ fontWeight: 900, fontSize: 16, textTransform: 'uppercase', marginBottom: 4 }}>{p.name}</div>
                 <div style={{ fontSize: 13, color: 'var(--text-2)', fontWeight: 700, marginBottom: '0.75rem' }}>{p.description}</div>
+                <div style={{ display: 'flex', gap: 12, marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                  {p.github && <a href={p.github.startsWith('http') ? p.github : `https://${p.github}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--indigo)', fontWeight: 900, textDecoration: 'none' }}>🔗 GitHub</a>}
+                  {(p as any).deployment && <a href={(p as any).deployment.startsWith('http') ? (p as any).deployment : `https://${(p as any).deployment}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, color: 'var(--amber)', fontWeight: 900, textDecoration: 'none' }}>🌐 Live Demo</a>}
+                </div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {p.tech.map(t => <span key={t} className="tag tag-skill" style={{ fontSize: 11, padding: '2px 7px' }}>{t}</span>)}
                 </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Certifications */}
+        {profile.certifications && profile.certifications.length > 0 && (
+          <div className="neo-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginBottom: '1.25rem' }}>CERTIFICATIONS</div>
+            {profile.certifications.map((c, i) => (
+              <div key={i} style={{ fontSize: 13, color: 'var(--text)', fontWeight: 700, marginBottom: '0.5rem', paddingBottom: i < profile.certifications.length - 1 ? '0.5rem' : 0, borderBottom: i < profile.certifications.length - 1 ? '1.5px solid var(--border)' : 'none' }}>
+                🏅 {c.toUpperCase()}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Achievements */}
+        {(profile as any).achievements && (profile as any).achievements.length > 0 && (
+          <div className="neo-card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+            <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900, marginBottom: '1.25rem' }}>ACHIEVEMENTS</div>
+            {(profile as any).achievements.map((a: string, i: number) => (
+              <div key={i} style={{ fontSize: 13, color: 'var(--text)', fontWeight: 700, marginBottom: '0.5rem', paddingBottom: i < (profile as any).achievements.length - 1 ? '0.5rem' : 0, borderBottom: i < (profile as any).achievements.length - 1 ? '1.5px solid var(--border)' : 'none' }}>
+                🏆 {a.toUpperCase()}
               </div>
             ))}
           </div>

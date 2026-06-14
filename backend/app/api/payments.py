@@ -221,6 +221,13 @@ async def get_subscription_status(
     """
     Returns the subscription status for the current user.
     """
+    if current_user.role == "ADMIN":
+        return SubscriptionStatusResponse(
+            is_premium=True,
+            plan_type="yearly",
+            premium_until=(datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+        )
+
     stmt = select(PremiumUser).where(PremiumUser.user_id == current_user.id)
     res = await db.execute(stmt)
     pu = res.scalar_one_or_none()

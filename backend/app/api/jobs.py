@@ -346,15 +346,72 @@ async def get_jobs(
             "requiredSkills": job.required_skills,
             "matchScore": match_score,
             "matchBreakdown": match_breakdown,
-            "skillGaps": skill_gaps
+            "skillGaps": skill_gaps,
+            "searchScore": search_scores.get(job.id, 0) if search else 0
         })
 
-    if search:
-        jobs_list.sort(key=lambda j: search_scores.get(j["id"], 0), reverse=True)
-    elif user_skills_list:
-        jobs_list.sort(key=lambda j: ((j["matchScore"] or 0), j["postedAt"] or ""), reverse=True)
-    else:
-        jobs_list.sort(key=lambda j: j["postedAt"] or "", reverse=True)
+    # ── 4a. Group, Shuffle, and Diversify Listings ──
+    import random
+    # Use UTC date as stable daily seed for pagination consistency
+    today_str = datetime.datetime.now(datetime.timezone.utc).date().isoformat()
+    rng = random.Random(today_str)
+
+    buckets = {}
+    for j in jobs_list:
+        if search:
+            # Group by search score range (e.g. increments of 20 points)
+            score = j.get("searchScore", 0)
+            bucket_key = int(score // 20) * 20
+        elif user_skills_list:
+            # Group by match score (e.g. 99, 85, etc.)
+            bucket_key = j.get("matchScore") or 0
+        else:
+            # Group by posted date (e.g. "2026-06-11")
+            bucket_key = j.get("postedAt") or "unknown"
+
+        if bucket_key not in buckets:
+            buckets[bucket_key] = []
+        buckets[bucket_key].append(j)
+
+    # Sort each bucket deterministically by id before shuffling to ensure stable output
+    sorted_keys = sorted(buckets.keys(), reverse=True)
+    shuffled_jobs = []
+    for key in sorted_keys:
+        bucket_content = buckets[key]
+        bucket_content.sort(key=lambda x: str(x.get("id")))
+        rng.shuffle(bucket_content)
+        shuffled_jobs.extend(bucket_content)
+
+    # Walk list and pull forward different sources to avoid showing >1 consecutive of same source
+    diversified = []
+    remaining = list(shuffled_jobs)
+    consecutive_count = 0
+    current_source = None
+    max_consecutive = 1
+
+    while remaining:
+        found_idx = -1
+        for i, job in enumerate(remaining):
+            source = job.get("source")
+            if consecutive_count < max_consecutive or source != current_source:
+                found_idx = i
+                break
+
+        if found_idx == -1:
+            found_idx = 0
+
+        job = remaining.pop(found_idx)
+        source = job.get("source")
+
+        if source == current_source:
+            consecutive_count += 1
+        else:
+            current_source = source
+            consecutive_count = 1
+
+        diversified.append(job)
+
+    jobs_list = diversified
 
     total = len(jobs_list)
     start_idx = (page - 1) * limit

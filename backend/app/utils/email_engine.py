@@ -113,10 +113,15 @@ def generate_digest_html(user_name: str, high_match: List[Dict[str, Any]], med_m
     </html>
     """
 
-async def send_daily_digest_email(to_email: str, user_name: str, jobs: List[Dict[str, Any]]) -> bool:
+async def send_daily_digest_email(
+    to_email: str,
+    user_name: str,
+    jobs: List[Dict[str, Any]],
+    digest_log_id: str | None = None
+) -> bool:
     """
-    Groups matching jobs, formats as HTML, and sends using SMTP settings.
-    If credentials are mock, prints digest to console and logs as mock-sent.
+    Groups matching jobs, formats as HTML, and sends using Resend API, SendGrid API, or SMTP.
+    If no API keys or SMTP credentials are configured, falls back to a detailed logging driver.
     """
     high_match = [j for j in jobs if j["match_score"] >= 80]
     med_match = [j for j in jobs if 70 <= j["match_score"] < 80]
@@ -124,42 +129,105 @@ async def send_daily_digest_email(to_email: str, user_name: str, jobs: List[Dict
     
     html_content = generate_digest_html(user_name, high_match, med_match, stretch_match)
     
+    resend_api_key = os.environ.get("RESEND_API_KEY")
+    sendgrid_api_key = os.environ.get("SENDGRID_API_KEY")
     smtp_host = os.environ.get("SMTP_HOST", "smtp.gmail.com")
     smtp_port = int(os.environ.get("SMTP_PORT", "587"))
     smtp_user = os.environ.get("SMTP_USER", "")
     smtp_pass = os.environ.get("SMTP_PASSWORD", "")
     smtp_from = os.environ.get("SMTP_FROM", "noreply@internshipiq.com")
     
+    # 1. Try Resend API
+    if resend_api_key:
+        try:
+            import httpx
+            headers = {
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json"
+            }
+            tags = [{"name": "digest_log_id", "value": str(digest_log_id)}] if digest_log_id else []
+            payload = {
+                "from": smtp_from if "@" in smtp_from else "InternshipIQ <onboarding@resend.dev>",
+                "to": [to_email],
+                "subject": "Your InternshipIQ Daily Internship Digest",
+                "html": html_content,
+                "tags": tags
+            }
+            async with httpx.AsyncClient() as client:
+                resp = await client.post("https://api.resend.com/emails", json=payload, headers=headers, timeout=10.0)
+                if resp.status_code in [200, 201, 202]:
+                    logger.info(f"Resend: Daily Digest email sent successfully to {to_email}")
+                    return True
+                else:
+                    logger.error(f"Resend API error: {resp.status_code} - {resp.text}")
+        except Exception as e:
+            logger.error(f"Failed to send daily digest email via Resend to {to_email}: {e}")
+
+    # 2. Try SendGrid API
+    elif sendgrid_api_key:
+        try:
+            import httpx
+            headers = {
+                "Authorization": f"Bearer {sendgrid_api_key}",
+                "Content-Type": "application/json"
+            }
+            custom_args = {"digest_log_id": str(digest_log_id)} if digest_log_id else {}
+            payload = {
+                "personalizations": [{
+                    "to": [{"email": to_email}],
+                    "custom_args": custom_args
+                }],
+                "from": {"email": smtp_from},
+                "subject": "Your InternshipIQ Daily Internship Digest",
+                "content": [{
+                    "type": "text/html",
+                    "value": html_content
+                }]
+            }
+            async with httpx.AsyncClient() as client:
+                resp = await client.post("https://api.sendgrid.com/v3/mail/send", json=payload, headers=headers, timeout=10.0)
+                if resp.status_code in [200, 201, 202]:
+                    logger.info(f"SendGrid: Daily Digest email sent successfully to {to_email}")
+                    return True
+                else:
+                    logger.error(f"SendGrid API error: {resp.status_code} - {resp.text}")
+        except Exception as e:
+            logger.error(f"Failed to send daily digest email via SendGrid to {to_email}: {e}")
+
+    # 3. Try SMTP
     is_mock = not smtp_user or not smtp_pass or smtp_user == "mock_user@gmail.com"
-    
-    if is_mock:
-        # Mock mode fallback: log generated email parameters to console
-        logger.info(f"--- MOCK DAILY DIGEST EMAIL ---")
-        logger.info(f"To: {to_email}")
-        logger.info(f"Subject: Your InternshipIQ Daily Internship Digest")
-        logger.info(f"Jobs Matched: {len(jobs)} total (High: {len(high_match)}, Med: {len(med_match)}, Stretch: {len(stretch_match)})")
-        logger.info(f"--------------------------------")
-        return True
-        
-    try:
-        def send():
-            msg = MIMEMultipart("alternative")
-            msg["Subject"] = "Your InternshipIQ Daily Internship Digest"
-            msg["From"] = smtp_from
-            msg["To"] = to_email
-            
-            part = MIMEText(html_content, "html")
-            msg.attach(part)
-            
-            with smtplib.SMTP(smtp_host, smtp_port, timeout=10.0) as server:
-                if smtp_port == 587:
-                    server.starttls()
-                server.login(smtp_user, smtp_pass)
-                server.sendmail(smtp_from, to_email, msg.as_string())
+    if not is_mock:
+        try:
+            def send():
+                msg = MIMEMultipart("alternative")
+                msg["Subject"] = "Your InternshipIQ Daily Internship Digest"
+                msg["From"] = smtp_from
+                msg["To"] = to_email
+                if digest_log_id:
+                    msg["X-Digest-Log-ID"] = str(digest_log_id)
                 
-        await asyncio.to_thread(send)
-        logger.info(f"Personalized Daily Digest email sent successfully to {to_email}")
-        return True
-    except Exception as e:
-        logger.error(f"Failed to send daily digest email to {to_email}: {e}")
-        return False
+                part = MIMEText(html_content, "html")
+                msg.attach(part)
+                
+                with smtplib.SMTP(smtp_host, smtp_port, timeout=10.0) as server:
+                    if smtp_port == 587:
+                        server.starttls()
+                    server.login(smtp_user, smtp_pass)
+                    server.sendmail(smtp_from, to_email, msg.as_string())
+                    
+            await asyncio.to_thread(send)
+            logger.info(f"SMTP: Daily Digest email sent successfully to {to_email}")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to send daily digest email via SMTP to {to_email}: {e}")
+            return False
+
+    # 4. Fallback to mock logging driver
+    logger.info(f"--- MOCK DAILY DIGEST EMAIL ---")
+    logger.info(f"To: {to_email}")
+    logger.info(f"Subject: Your InternshipIQ Daily Internship Digest")
+    if digest_log_id:
+        logger.info(f"Digest Log ID: {digest_log_id}")
+    logger.info(f"Jobs Matched: {len(jobs)} total (High: {len(high_match)}, Med: {len(med_match)}, Stretch: {len(stretch_match)})")
+    logger.info(f"--------------------------------")
+    return True

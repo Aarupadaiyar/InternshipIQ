@@ -6,6 +6,7 @@ Never exposes password_hash or internal file paths.
 """
 import uuid
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
@@ -54,6 +55,8 @@ class UserResponse(BaseModel):
     full_name: str
     email: EmailStr
     is_active: bool
+    role: str
+    last_login: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 

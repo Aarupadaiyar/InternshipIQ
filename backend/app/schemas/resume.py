@@ -49,6 +49,7 @@ class ProjectItem(BaseModel):
     tech: list[str] = Field(default_factory=list, examples=[["Python", "LightGBM"]])
     technologies: list[str] = Field(default_factory=list)
     github: Optional[str] = None
+    deployment: Optional[str] = None
 
 
 # ── Resume Profile Schemas ────────────────────────────────────────────────────
@@ -67,6 +68,11 @@ class ResumeProfileCreate(BaseModel):
     experience: list[ExperienceItem] = Field(default_factory=list)
     links: dict = Field(default_factory=dict)
     raw_text: Optional[str] = None
+    career_recommendations: list[str] = Field(default_factory=list)
+    soft_skills: list[str] = Field(default_factory=list)
+    experience_signals: list[str] = Field(default_factory=list)
+    achievement_signals: list[str] = Field(default_factory=list)
+    locations: list[str] = Field(default_factory=list)
 
 
 class ResumeProfileResponse(BaseModel):
@@ -83,6 +89,11 @@ class ResumeProfileResponse(BaseModel):
     experience: list[Any]
     links: dict
     parsed_at: datetime
+    career_recommendations: list[Any] = Field(default_factory=list)
+    soft_skills: list[Any] = Field(default_factory=list)
+    experience_signals: list[Any] = Field(default_factory=list)
+    achievement_signals: list[Any] = Field(default_factory=list)
+    locations: list[Any] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 

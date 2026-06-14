@@ -16,7 +16,7 @@ from app.database.base_class import Base
 
 
 class Resume(Base):
-    __tablename__ = "resumes"
+    __tablename__ = "user_resumes"
 
     # ── Primary Key ───────────────────────────────────────────────────────────
     id: Mapped[uuid.UUID] = mapped_column(

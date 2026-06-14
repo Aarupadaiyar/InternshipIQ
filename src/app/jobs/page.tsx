@@ -110,6 +110,9 @@ export default function JobsPage() {
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [relatedFilters, setRelatedFilters] = useState<{ skills: string[]; domains: string[] }>({ skills: [], domains: [] })
+  const [suggestedSearches, setSuggestedSearches] = useState<string[] | null>(null)
+  const [suggestedKeywords, setSuggestedKeywords] = useState<string[] | null>(null)
+  const [suggestedDomains, setSuggestedDomains] = useState<string[] | null>(null)
   const [page, setPage] = useState(1)
   const [total, setTotal] = useState(0)
   const limit = 30
@@ -168,6 +171,9 @@ export default function JobsPage() {
         setAllSources(data.sources || [])
         setAllLocations(data.locations || [])
         setFetchedAt(data.fetchedAt || '')
+        setSuggestedSearches(data.suggestedSearches || null)
+        setSuggestedKeywords(data.suggestedKeywords || null)
+        setSuggestedDomains(data.suggestedDomains || null)
       })
       .catch(err => console.error(err))
       .finally(() => {
@@ -613,10 +619,74 @@ export default function JobsPage() {
                 </div>
               ))}
               {jobs.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-3)', border: '4px dashed var(--border)' }}>
-                  <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
-                  <div style={{ fontWeight: 900, textTransform: 'uppercase', marginBottom: 8 }}>No Matches Found</div>
-                  <div style={{ fontSize: 13 }}>Try adjusting your filters or search keywords.</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                  <div style={{ textAlign: 'center', padding: '3.5rem 2rem', color: 'var(--text-3)', border: '4px dashed var(--border)', background: 'var(--bg-2)', marginBottom: 10 }}>
+                    <div style={{ fontSize: 32, marginBottom: 12 }}>🔍</div>
+                    <div style={{ fontWeight: 900, textTransform: 'uppercase', marginBottom: 8, color: 'var(--text)' }}>No Direct Matches Found</div>
+                    <div style={{ fontSize: 13 }}>We couldn't find internships matching your query. Below are recent uploads that might interest you, along with recovery suggestions:</div>
+                  </div>
+
+                  {(suggestedSearches || suggestedKeywords || suggestedDomains) && (
+                    <div className="neo-card" style={{ padding: '2rem', background: 'var(--bg-2)', marginBottom: 20 }}>
+                      <h3 className="font-display" style={{ fontSize: 18, fontWeight: 900, marginBottom: '1.5rem', textTransform: 'uppercase' }}>
+                        Recovery Suggestions
+                      </h3>
+                      
+                      {suggestedSearches && suggestedSearches.length > 0 && (
+                        <div style={{ marginBottom: '1.25rem' }}>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Space Grotesk' }}>Related Searches</div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {suggestedSearches.map(s => (
+                              <button
+                                key={s}
+                                onClick={() => handleFilterChange({ search: s })}
+                                className="neo-btn"
+                                style={{ padding: '6px 12px', fontSize: 11, background: 'var(--bg-3)', color: 'var(--text)' }}
+                              >
+                                {s.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {suggestedKeywords && suggestedKeywords.length > 0 && (
+                        <div style={{ marginBottom: '1.25rem' }}>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Space Grotesk' }}>Alternative Keywords</div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {suggestedKeywords.map(k => (
+                              <button
+                                key={k}
+                                onClick={() => handleFilterChange({ search: k })}
+                                className="neo-btn"
+                                style={{ padding: '6px 12px', fontSize: 11, background: 'var(--bg-3)', color: 'var(--text)' }}
+                              >
+                                {k.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {suggestedDomains && suggestedDomains.length > 0 && (
+                        <div>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: 'var(--text-3)', textTransform: 'uppercase', marginBottom: 8, fontFamily: 'Space Grotesk' }}>Relevant Domains</div>
+                          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {suggestedDomains.map(d => (
+                              <button
+                                key={d}
+                                onClick={() => handleFilterChange({ domain: d })}
+                                className="neo-btn"
+                                style={{ padding: '6px 12px', fontSize: 11, background: 'var(--bg-3)', color: 'var(--text)' }}
+                              >
+                                {d.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

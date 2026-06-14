@@ -21,5 +21,6 @@ from app.models.scraper_metrics import ScraperMetrics  # noqa: F401, E402
 from app.models.source import Source  # noqa: F401, E402
 from app.models.rejection_log import RejectionLog  # noqa: F401, E402
 from app.models.subscription import Subscription, Payment, PremiumUser, EmailDigestLog, SubscriptionEvent  # noqa: F401, E402
+from app.models.email_preferences import EmailPreferences  # noqa: F401, E402
 
 

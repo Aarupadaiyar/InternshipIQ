@@ -75,10 +75,13 @@ async def run_periodic_daily_digest():
     await asyncio.sleep(15)
 
     import datetime
+    import zoneinfo
+    import uuid
     from sqlalchemy import select
     from app.database.session import AsyncSessionLocal
     from app.models.subscription import PremiumUser, EmailDigestLog
     from app.models.user import User
+    from app.models.user_preferences import UserPreferences
     from app.models.resume_profile import ResumeProfile
     from app.models.job import JobModel
     from app.api.jobs import calculate_match_score
@@ -88,9 +91,13 @@ async def run_periodic_daily_digest():
         try:
             print("Background Daily Digest Worker: Beginning email digest checking cycle...")
             async with AsyncSessionLocal() as db:
-                # 1. Fetch active premium users
+                # 1. Fetch active premium users and their preferences
                 now = datetime.datetime.now(datetime.timezone.utc)
-                stmt_pu = select(PremiumUser, User).join(User, PremiumUser.user_id == User.id).where(
+                stmt_pu = select(PremiumUser, User, UserPreferences).join(
+                    User, PremiumUser.user_id == User.id
+                ).outerjoin(
+                    UserPreferences, User.id == UserPreferences.user_id
+                ).where(
                     PremiumUser.is_premium == True,
                     PremiumUser.premium_until >= now
                 )
@@ -109,7 +116,39 @@ async def run_periodic_daily_digest():
                 if not latest_jobs:
                     print("Background Daily Digest Worker: No new listings in the last 24 hours.")
                 else:
-                    for pu, user in active_premiums:
+                    for pu, user, prefs in active_premiums:
+                        # Skip if email digest is disabled
+                        email_enabled = prefs.email_digest_enabled if prefs else True
+                        if not email_enabled:
+                            continue
+
+                        # Check timezone and scheduled hour
+                        user_tz = prefs.timezone if (prefs and prefs.timezone) else "UTC"
+                        user_digest_time = prefs.digest_time if (prefs and prefs.digest_time) else "09:00 AM"
+
+                        try:
+                            tz = zoneinfo.ZoneInfo(user_tz)
+                        except Exception:
+                            tz = zoneinfo.ZoneInfo("UTC")
+
+                        local_now = now.astimezone(tz)
+
+                        # Parse scheduled hour from digest_time string (e.g. "09:00 AM")
+                        try:
+                            dt_str = user_digest_time.strip().upper()
+                            time_part, ampm = dt_str.split()
+                            h_str, m_str = time_part.split(":")
+                            sched_hour = int(h_str)
+                            if ampm == "PM" and sched_hour < 12:
+                                sched_hour += 12
+                            elif ampm == "AM" and sched_hour == 12:
+                                sched_hour = 0
+                        except Exception:
+                            sched_hour = 9  # Default to 9 AM
+
+                        if local_now.hour != sched_hour:
+                            continue
+
                         # Prevent duplicate sends in last 20 hours
                         stmt_log = select(EmailDigestLog).where(
                             EmailDigestLog.user_id == user.id,
@@ -146,11 +185,18 @@ async def run_periodic_daily_digest():
                                 })
 
                         if matched_jobs:
+                            digest_log_id = uuid.uuid4()
                             # Trigger email sending (handles sandbox/mock modes natively)
-                            sent_success = await send_daily_digest_email(user.email, user.full_name, matched_jobs)
+                            sent_success = await send_daily_digest_email(
+                                user.email,
+                                user.full_name,
+                                matched_jobs,
+                                digest_log_id=str(digest_log_id)
+                            )
 
                             # Log sent status
                             digest_log = EmailDigestLog(
+                                id=digest_log_id,
                                 user_id=user.id,
                                 recipient_email=user.email,
                                 subject="Your InternshipIQ Daily Internship Digest",
@@ -159,7 +205,7 @@ async def run_periodic_daily_digest():
                             )
                             db.add(digest_log)
                             await db.commit()
-                            print(f"Background Daily Digest Worker: Dispatched digest email to {user.email} with {len(matched_jobs)} recommendations.")
+                            print(f"Background Daily Digest Worker: Dispatched digest email to {user.email} with {len(matched_jobs)} recommendations. Log ID: {digest_log_id}")
                         else:
                             print(f"Background Daily Digest Worker: No suitable matches (>=50%) found for user {user.email}.")
         except Exception as e:

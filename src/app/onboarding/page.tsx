@@ -124,6 +124,10 @@ export default function OnboardingPage() {
           tech: p.tech || p.technologies || [],
         })),
         confidence: parseData.confidence || parseData.profile.confidence || {},
+        career_recommendations: parseData.profile.career_recommendations || [],
+        soft_skills: parseData.profile.soft_skills || [],
+        experience_signals: parseData.profile.experience_signals || [],
+        achievement_signals: parseData.profile.achievement_signals || [],
       }
       setMissingFields(parseData.missingFields || [])
       setLowConfidenceFields(parseData.lowConfidenceFields || [])
@@ -140,7 +144,7 @@ export default function OnboardingPage() {
       if (!uploadRes.ok) throw new Error('Failed to upload resume file to server')
       const resumeObj = await uploadRes.json()
 
-      // 3. Save parsed profile to backend /resume/{id}/profile
+      // 3. Save parsed profile to backend /resume/{id}/profile (including new intelligence fields)
       const profileRes = await fetch(`http://localhost:8000/resume/${resumeObj.id}/profile`, {
         method: 'POST',
         headers: {
@@ -155,7 +159,12 @@ export default function OnboardingPage() {
           certifications: parsedProfile.certifications || [],
           achievements: parsedProfile.achievements || [],
           links: parsedProfile.links || {},
-          raw_text: text
+          raw_text: text,
+          career_recommendations: parsedProfile.career_recommendations,
+          soft_skills: parsedProfile.soft_skills,
+          experience_signals: parsedProfile.experience_signals,
+          achievement_signals: parsedProfile.achievement_signals,
+          locations: parsedProfile.locations || [],
         })
       })
 
@@ -473,6 +482,22 @@ export default function OnboardingPage() {
                     style={{ width:'100%', fontSize: 13, marginBottom:10, height: '40px', textTransform: 'uppercase' }}
                     placeholder="WHAT DOES IT DO?"
                   />
+                  <div style={{ display:'flex', gap:10, marginBottom:10 }}>
+                    <input
+                      value={(proj as any).github || ''}
+                      onChange={e => setProfile(p => p ? { ...p, projects: p.projects.map((x, j) => j === i ? { ...x, github: e.target.value } : x) } : p)}
+                      className="neo-input"
+                      style={{ flex:1, fontSize: 13, height: '36px' }}
+                      placeholder="GITHUB REPO LINK"
+                    />
+                    <input
+                      value={(proj as any).deployment || ''}
+                      onChange={e => setProfile(p => p ? { ...p, projects: p.projects.map((x, j) => j === i ? { ...x, deployment: e.target.value } : x) } : p)}
+                      className="neo-input"
+                      style={{ flex:1, fontSize: 13, height: '36px' }}
+                      placeholder="DEPLOYMENT LINK (E.G. VERCEL/GITHUB IO)"
+                    />
+                  </div>
                   <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:10 }}>
                     {proj.tech.map(t => (
                       <span key={t} className="tag tag-skill" style={{ display:'inline-flex', alignItems:'center', gap:6 }}>
@@ -494,6 +519,64 @@ export default function OnboardingPage() {
                       }
                     }}
                   />
+                </div>
+              ))}
+            </div>
+
+            {/* Certifications Card */}
+            <div className="neo-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: '1rem' }}>
+                <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900 }}>CERTIFICATIONS</div>
+                <button
+                  onClick={() => setProfile(p => p ? { ...p, certifications: [...(p.certifications || []), ''] } : p)}
+                  className="neo-btn"
+                  style={{ fontSize: 11, color: '#000000', background: 'var(--amber)', padding: '4px 10px' }}
+                >+ ADD CERTIFICATION</button>
+              </div>
+              {(profile.certifications || []).length === 0 && <p style={{ color: 'var(--text-3)', fontSize: 13, marginBottom: 12, fontWeight: 700 }}>No certifications detected.</p>}
+              {(profile.certifications || []).map((cert, i) => (
+                <div key={i} style={{ display:'flex', gap:10, marginBottom:10 }}>
+                  <input
+                    value={cert}
+                    onChange={e => setProfile(p => p ? { ...p, certifications: (p.certifications || []).map((x, j) => j === i ? e.target.value : x) } : p)}
+                    className="neo-input"
+                    style={{ flex:1, height: '40px', textTransform: 'uppercase' }}
+                    placeholder="E.G. AWS CERTIFIED BY AMAZON (2025)"
+                  />
+                  <button
+                    onClick={() => setProfile(p => p ? { ...p, certifications: (p.certifications || []).filter((_, j) => j !== i) } : p)}
+                    className="neo-btn"
+                    style={{ background:'var(--red)', width: '40px', height: '40px', padding: 0 }}
+                  >✕</button>
+                </div>
+              ))}
+            </div>
+
+            {/* Achievements Card */}
+            <div className="neo-card" style={{ padding: '1.5rem', marginBottom: '1.5rem' }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: '1rem' }}>
+                <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900 }}>ACHIEVEMENTS / AWARDS</div>
+                <button
+                  onClick={() => setProfile(p => p ? { ...p, achievements: [...(p.achievements || []), ''] } : p)}
+                  className="neo-btn"
+                  style={{ fontSize: 11, color: '#000000', background: 'var(--amber)', padding: '4px 10px' }}
+                >+ ADD ACHIEVEMENT</button>
+              </div>
+              {(profile.achievements || []).length === 0 && <p style={{ color: 'var(--text-3)', fontSize: 13, marginBottom: 12, fontWeight: 700 }}>No achievements detected.</p>}
+              {(profile.achievements || []).map((ach, i) => (
+                <div key={i} style={{ display:'flex', gap:10, marginBottom:10 }}>
+                  <input
+                    value={ach}
+                    onChange={e => setProfile(p => p ? { ...p, achievements: (p.achievements || []).map((x, j) => j === i ? e.target.value : x) } : p)}
+                    className="neo-input"
+                    style={{ flex:1, height: '40px', textTransform: 'uppercase' }}
+                    placeholder="E.G. WINNER AT HACKATHON, OR PUBLICATION TITLE"
+                  />
+                  <button
+                    onClick={() => setProfile(p => p ? { ...p, achievements: (p.achievements || []).filter((_, j) => j !== i) } : p)}
+                    className="neo-btn"
+                    style={{ background:'var(--red)', width: '40px', height: '40px', padding: 0 }}
+                  >✕</button>
                 </div>
               ))}
             </div>

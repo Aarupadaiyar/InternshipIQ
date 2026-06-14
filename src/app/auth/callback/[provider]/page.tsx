@@ -3,6 +3,8 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
 function CallbackContent() {
   const router = useRouter()
   const params = useParams()
@@ -20,7 +22,7 @@ function CallbackContent() {
 
     const completeOAuth = async () => {
       try {
-        const endpoint = `http://localhost:8000/auth/${provider}-login`
+        const endpoint = `${API_BASE}/auth/${provider}-login`
         const redirectUri = `${window.location.origin}/auth/callback/${provider}`
         
         const res = await fetch(endpoint, {
@@ -44,17 +46,18 @@ function CallbackContent() {
         localStorage.removeItem('iq_user')
 
         // Fetch onboarding / profile state
-        const dashRes = await fetch('http://localhost:8000/dashboard/profile', {
+        const dashRes = await fetch(`${API_BASE}/dashboard/profile`, {
           headers: { 'Authorization': `Bearer ${data.access_token}` }
         })
         
         if (dashRes.ok) {
           const dashData = await dashRes.json()
-          if (dashData.profile) {
+          const resumeProfile = dashData.resume_profile
+          if (resumeProfile) {
             localStorage.setItem('iq_user', JSON.stringify({
-              profile: dashData.profile,
+              profile: resumeProfile,
               prefs: dashData.preferences || { roles: [], domains: [], locations: [], remote: 'any' },
-              skills: dashData.profile.skills || []
+              skills: resumeProfile.skills || []
             }))
             router.push('/dashboard')
             return
@@ -62,8 +65,8 @@ function CallbackContent() {
         }
 
         router.push('/onboarding')
-      } catch (err: any) {
-        setError(err.message || 'Verification failed')
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Verification failed')
       }
     }
 

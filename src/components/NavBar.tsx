@@ -76,12 +76,14 @@ export default function NavBar({ name: propName }: { name?: string }) {
         { href: '/dashboard', label: 'Dashboard' },
         { href: '/jobs', label: 'Jobs' },
         { href: '/gaps', label: 'Skill Gaps' },
+        { href: '/about', label: 'About' },
         { href: '/analytics', label: 'Analytics' },
         { href: '/pricing', label: 'Pricing' },
         { href: '/developer', label: 'About Developer' },
         { href: '/profile', label: 'Profile' },
       ]
     : [
+        { href: '/about', label: 'About' },
         { href: '/jobs', label: 'Browse Jobs' },
         { href: '/analytics', label: 'Analytics' },
         { href: '/pricing', label: 'Pricing' },

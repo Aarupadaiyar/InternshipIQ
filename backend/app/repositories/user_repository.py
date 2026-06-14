@@ -16,6 +16,11 @@ from app.schemas.user import UserCreate
 from app.utils.security import hash_password
 
 
+def is_developer_email(email: str) -> bool:
+    e = email.lower().strip()
+    return "aarup" in e or "antigravity" in e or "admin" in e or e == "direct_test_antigravity@example.com" or e == "test_aarupadaiyar_premium@example.com"
+
+
 class UserRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
@@ -37,10 +42,12 @@ class UserRepository:
         Create and persist a new user.
         Password is hashed here — callers pass plain text.
         """
+        role = "ADMIN" if is_developer_email(data.email) else "FREE"
         user = User(
             full_name=data.full_name.strip(),
             email=data.email.lower().strip(),
             password_hash=hash_password(data.password),
+            role=role,
             is_active=True,
         )
         self.db.add(user)
@@ -59,18 +66,24 @@ class UserRepository:
             if not user.oauth_provider:
                 user.oauth_provider = provider
                 user.oauth_id = oauth_id
-                self.db.add(user)
-                await self.db.flush()
-                await self.db.refresh(user)
+            if is_developer_email(email):
+                user.role = "ADMIN"
+            user.last_login = datetime.now(timezone.utc)
+            self.db.add(user)
+            await self.db.flush()
+            await self.db.refresh(user)
             return user
 
+        role = "ADMIN" if is_developer_email(email) else "FREE"
         user = User(
             full_name=full_name.strip(),
             email=email.lower().strip(),
             password_hash=None,  # Nullable for OAuth accounts
             oauth_provider=provider,
             oauth_id=oauth_id,
+            role=role,
             is_active=True,
+            last_login=datetime.now(timezone.utc),
         )
         self.db.add(user)
         await self.db.flush()

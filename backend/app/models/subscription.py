@@ -103,7 +103,7 @@ class PremiumUser(Base):
     )
 
 class EmailDigestLog(Base):
-    __tablename__ = "email_digest_logs"
+    __tablename__ = "digest_logs"
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -125,8 +125,11 @@ class EmailDigestLog(Base):
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
     recipient_email: Mapped[str] = mapped_column(String(255), nullable=False)
     jobs_sent_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    status: Mapped[str] = mapped_column(String(50), default="sent", nullable=False) # sent, failed
+    status: Mapped[str] = mapped_column(String(50), default="sent", nullable=False) # sent, failed, delivered, opened, clicked
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    opened_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    clicked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 class SubscriptionEvent(Base):
     __tablename__ = "subscription_events"

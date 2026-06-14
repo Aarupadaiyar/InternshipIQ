@@ -37,6 +37,19 @@ function SkillGapBar({ skill, count, total }: { skill: string; count: number; to
   )
 }
 
+const ROLE_COLORS: Record<string, string> = {
+  'AI Engineer': 'var(--neo-violet)',
+  'Machine Learning Engineer': 'var(--indigo)',
+  'Data Scientist': 'var(--indigo)',
+  'Data Analyst': '#00897B',
+  'Full Stack Developer': 'var(--amber)',
+  'Frontend Developer': 'var(--amber)',
+  'Backend Developer': '#E65100',
+  'DevOps Engineer': '#546E7A',
+  'Product Manager': 'var(--green)',
+  'Cybersecurity Analyst': 'var(--red)',
+}
+
 export default function DashboardPage() {
   const [profile, setProfile] = useState<ParsedProfile | null>(null)
   const [jobs, setJobs] = useState<Job[]>([])
@@ -70,7 +83,11 @@ export default function DashboardPage() {
           experience: dashData.resume_profile.experience || [],
           projects: dashData.resume_profile.projects || [],
           certifications: dashData.resume_profile.certifications || [],
-          links: dashData.resume_profile.links || {}
+          links: dashData.resume_profile.links || {},
+          career_recommendations: dashData.resume_profile.career_recommendations || [],
+          soft_skills: dashData.resume_profile.soft_skills || [],
+          experience_signals: dashData.resume_profile.experience_signals || [],
+          achievement_signals: dashData.resume_profile.achievement_signals || [],
         }
         setProfile(p)
         localStorage.setItem('iq_user', JSON.stringify({
@@ -113,6 +130,12 @@ export default function DashboardPage() {
     )
   }
 
+  const careerRecs = profile?.career_recommendations || []
+  const softSkills = profile?.soft_skills || []
+  const expSignals = profile?.experience_signals || []
+  const achSignals = profile?.achievement_signals || []
+  const allSignals = [...expSignals, ...achSignals]
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', transition: 'background 0.3s, color 0.3s' }}>
       <NavBar name={profile?.name || ''} />
@@ -140,6 +163,115 @@ export default function DashboardPage() {
             </div>
           ))}
         </div>
+
+        {/* Career Intelligence: Recommendations + Signals */}
+        {(careerRecs.length > 0 || softSkills.length > 0 || allSignals.length > 0) && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20, marginBottom: '2rem' }}>
+
+            {/* Career Recommendations Panel */}
+            {careerRecs.length > 0 && (
+              <div className="neo-card" style={{ padding: '1.5rem', background: 'var(--bg-2)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1.25rem' }}>
+                  <span style={{ fontSize: 18 }}>🎯</span>
+                  <div style={{ fontSize: 13, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900 }}>AI CAREER RECOMMENDATIONS</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {careerRecs.map((role, idx) => (
+                    <div key={role} style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      padding: '10px 14px',
+                      border: '3px solid var(--border)',
+                      background: idx === 0 ? 'var(--amber)' : 'var(--bg)',
+                      boxShadow: idx === 0 ? '3px 3px 0px var(--shadow)' : '2px 2px 0px var(--shadow)',
+                      transform: idx === 0 ? 'rotate(-0.5deg)' : 'none',
+                      transition: 'transform 0.2s',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{
+                          width: 20, height: 20,
+                          background: ROLE_COLORS[role] || 'var(--indigo)',
+                          border: '2px solid var(--border)',
+                          borderRadius: 0,
+                          display: 'inline-block',
+                          flexShrink: 0
+                        }} />
+                        <span style={{ fontWeight: 900, fontSize: 13, textTransform: 'uppercase', color: idx === 0 ? '#000000' : 'var(--text)' }}>{role}</span>
+                      </div>
+                      <Link href={`/gaps?role=${encodeURIComponent(role)}`}>
+                        <button
+                          className="neo-btn"
+                          style={{
+                            fontSize: 10,
+                            padding: '4px 10px',
+                            background: idx === 0 ? '#000000' : 'var(--bg-2)',
+                            color: idx === 0 ? 'var(--amber)' : 'var(--text)',
+                            border: '2px solid var(--border)'
+                          }}
+                        >
+                          ANALYZE →
+                        </button>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: '1rem', fontSize: 11, color: 'var(--text-3)', fontWeight: 700, fontFamily: 'Space Grotesk' }}>
+                  Based on your detected skill set. Click ANALYZE to see skill gaps for each role.
+                </div>
+              </div>
+            )}
+
+            {/* Soft Skills + Signals Panel */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+              {softSkills.length > 0 && (
+                <div className="neo-card" style={{ padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+                    <span style={{ fontSize: 16 }}>🤝</span>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900 }}>SOFT SKILLS DETECTED</div>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {softSkills.map(s => (
+                      <span key={s} style={{
+                        padding: '5px 10px',
+                        fontSize: 11,
+                        fontWeight: 900,
+                        fontFamily: 'Space Grotesk',
+                        textTransform: 'uppercase',
+                        border: '2px solid var(--border)',
+                        background: 'var(--bg-3)',
+                        boxShadow: '2px 2px 0px var(--shadow)',
+                        color: 'var(--text)',
+                      }}>{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {allSignals.length > 0 && (
+                <div className="neo-card" style={{ padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '1rem' }}>
+                    <span style={{ fontSize: 16 }}>🏆</span>
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', fontFamily: 'Space Grotesk', fontWeight: 900 }}>ACHIEVEMENT &amp; EXPERIENCE SIGNALS</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    {expSignals.map(s => (
+                      <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '2px solid var(--border)', background: 'var(--bg-3)', boxShadow: '2px 2px 0px var(--shadow)' }}>
+                        <span style={{ color: 'var(--indigo)', fontWeight: 900, fontSize: 14 }}>⚙</span>
+                        <span style={{ fontSize: 12, fontWeight: 900, fontFamily: 'Space Grotesk', color: 'var(--text)', textTransform: 'uppercase' }}>{s}</span>
+                      </div>
+                    ))}
+                    {achSignals.map(s => (
+                      <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', border: '2px solid var(--border)', background: 'var(--amber-dim)', boxShadow: '2px 2px 0px var(--shadow)' }}>
+                        <span style={{ color: '#000000', fontWeight: 900, fontSize: 14 }}>★</span>
+                        <span style={{ fontSize: 12, fontWeight: 900, fontFamily: 'Space Grotesk', color: 'var(--text)', textTransform: 'uppercase' }}>{s}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
           {/* Left col */}

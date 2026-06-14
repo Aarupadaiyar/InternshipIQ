@@ -17,6 +17,8 @@ import httpx
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import select, func
+import random
+import urllib.parse
 
 from app.config import settings
 from app.models.job import JobModel
@@ -522,6 +524,149 @@ async def scrape_remotive() -> tuple[list[dict], int]:
     return jobs, total_found
 
 
+# ── LinkedIn Guest Scraper ─────────────────────────────────────────────────────
+
+def parse_relative_date(text: str) -> str:
+    text = text.lower().strip()
+    now = datetime.now()
+    if not text:
+        return now.strftime("%Y-%m-%d")
+    
+    match_days = re.search(r"(\d+)\s+day", text)
+    if match_days:
+        days = int(match_days.group(1))
+        return (now - timedelta(days=days)).strftime("%Y-%m-%d")
+        
+    match_weeks = re.search(r"(\d+)\s+week", text)
+    if match_weeks:
+        weeks = int(match_weeks.group(1))
+        return (now - timedelta(weeks=weeks)).strftime("%Y-%m-%d")
+        
+    match_months = re.search(r"(\d+)\s+month", text)
+    if match_months:
+        months = int(match_months.group(1))
+        return (now - timedelta(days=months * 30)).strftime("%Y-%m-%d")
+        
+    match_hours = re.search(r"(\d+)\s+hour", text)
+    if match_hours:
+        hours = int(match_hours.group(1))
+        return (now - timedelta(hours=hours)).strftime("%Y-%m-%d")
+        
+    return now.strftime("%Y-%m-%d")
+
+
+async def scrape_linkedin() -> tuple[list[dict], int]:
+    """
+    LinkedIn guest job scraper using seeMoreJobPostings endpoint.
+    Collects internships and entry-level positions without authentication.
+    """
+    keywords = ["internship", "entry level", "associate"]
+    locations = ["India", "United States", "Remote"]
+    
+    unique_job_ids = set()
+    total_found_raw = 0
+    
+    async with httpx.AsyncClient(headers=HEADERS, follow_redirects=True, timeout=15.0) as client:
+        for kw in keywords:
+            for loc in locations:
+                for start in [0, 25]:
+                    url = f"https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search?keywords={urllib.parse.quote(kw)}&location={urllib.parse.quote(loc)}&start={start}"
+                    try:
+                        res = await client.get(url)
+                        if res.status_code != 200:
+                            continue
+                        job_ids = re.findall(r'data-entity-urn="urn:li:jobPosting:(\d+)"', res.text)
+                        if not job_ids:
+                            break
+                        
+                        total_found_raw += len(job_ids)
+                        for jid in job_ids:
+                            unique_job_ids.add(jid)
+                            
+                        await asyncio.sleep(0.5)
+                    except Exception as e:
+                        print(f"[LinkedIn Search] Error: {e}", file=sys.stderr)
+                        break
+                        
+        print(f"[LinkedIn Search] Found {len(unique_job_ids)} unique job IDs out of {total_found_raw} raw listings")
+        
+        # Fetch details for unique jobs (limit to 50 to prevent aggressive scraping)
+        jobs_to_fetch = list(unique_job_ids)[:50]
+        jobs = []
+        
+        sem = asyncio.Semaphore(3)
+        
+        async def fetch_detail(jid):
+            async with sem:
+                detail_url = f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{jid}"
+                try:
+                    await asyncio.sleep(random.random() * 1.5)
+                    res = await client.get(detail_url)
+                    if res.status_code != 200:
+                        return
+                    
+                    html = res.text
+                    
+                    title_match = re.search(r'class="top-card-layout__title[^"]*"[^>]*>\s*([^<]+)\s*</', html)
+                    title = title_match.group(1).strip() if title_match else ""
+                    
+                    company_match = re.search(r'class="[^"]*topcard__org-name-link[^"]*"[^>]*>\s*([^<]+?)\s*</a', html)
+                    if not company_match:
+                        company_match = re.search(r'class="top-card-layout__org-name[^"]*"[^>]*>\s*([^<]+?)\s*</', html)
+                    company = company_match.group(1).strip() if company_match else ""
+                    
+                    location_match = re.search(r'class="[^"]*topcard__flavor--bullet[^"]*">\s*([^<]+?)\s*</span>', html)
+                    if not location_match:
+                        location_match = re.search(r'class="top-card-layout__metadata-item[^"]*"[^>]*>\s*([^<]+?)\s*</', html)
+                    location = location_match.group(1).strip() if location_match else ""
+                    
+                    desc_match = re.search(r'class="show-more-less-html__markup[^"]*">([\s\S]+?)</div>', html)
+                    raw_desc = desc_match.group(1).strip() if desc_match else ""
+                    description = re.sub(r"<[^>]*>", "", raw_desc).strip()
+                    
+                    posted_match = re.search(r'class="posted-time-ago__text[^"]*"[^>]*>\s*([^<]+)\s*</', html)
+                    posted_text = posted_match.group(1).strip() if posted_match else ""
+                    posted_at = parse_relative_date(posted_text)
+                    
+                    if not title or not company or len(description) < 20:
+                        return
+                        
+                    source_url = f"https://www.linkedin.com/jobs/view/{jid}"
+                    skills = extract_skills_from_text(title + " " + description)
+                    domain = classify_job_domains(title, description, skills)
+                    sal_min, sal_max = parse_salary(description)
+                    exp_lvl = infer_experience_level(title, description)
+                    int_type = infer_internship_type(title, description)
+                    comp_type = infer_company_type(company)
+                    
+                    jobs.append({
+                        "external_id": f"linkedin-{jid}",
+                        "title": title,
+                        "company": company,
+                        "location": location or "Remote",
+                        "type": "Remote" if "remote" in location.lower() or "work from home" in location.lower() else "On-site",
+                        "salary": "Competitive",
+                        "salary_min": sal_min,
+                        "salary_max": sal_max,
+                        "experience_level": exp_lvl,
+                        "internship_type": int_type,
+                        "company_type": comp_type,
+                        "deadline_date": datetime.now(timezone.utc) + timedelta(days=30),
+                        "source": "LinkedIn",
+                        "domain": domain,
+                        "source_url": source_url,
+                        "posted_at": posted_at,
+                        "description": description[:1500],
+                        "required_skills": skills,
+                    })
+                except Exception as e:
+                    print(f"[LinkedIn Detail] Error for job {jid}: {e}", file=sys.stderr)
+                    
+        await asyncio.gather(*(fetch_detail(jid) for jid in jobs_to_fetch))
+        print(f"[LinkedIn] Total parsed: {len(jobs)} jobs from {len(unique_job_ids)} unique found")
+        return jobs, len(unique_job_ids)
+
+
 # ── Main Aggregator with Full Pipeline Tracing ─────────────────────────────────
 
 async def crawl_and_save():
@@ -540,6 +685,7 @@ async def crawl_and_save():
         scrape_unstop(),
         scrape_internshala(),
         scrape_remotive(),
+        scrape_linkedin(),
         return_exceptions=True
     )
     total_runtime = time.time() - scrape_start
@@ -555,11 +701,13 @@ async def crawl_and_save():
     unstop_jobs, unstop_found = unpack(results[0], "Unstop")
     shala_jobs, shala_found = unpack(results[1], "Internshala")
     remotive_jobs, remotive_found = unpack(results[2], "Remotive")
+    linkedin_jobs, linkedin_found = unpack(results[3], "LinkedIn")
 
     sources_data = [
         {"name": "Unstop", "jobs": unstop_jobs, "found": unstop_found, "runtime": total_runtime},
         {"name": "Internshala", "jobs": shala_jobs, "found": shala_found, "runtime": total_runtime},
         {"name": "Remote Jobs", "jobs": remotive_jobs, "found": remotive_found, "runtime": total_runtime},
+        {"name": "LinkedIn", "jobs": linkedin_jobs, "found": linkedin_found, "runtime": total_runtime},
     ]
 
     # ── Per-source pipeline processing ────────────────────────────────────────
