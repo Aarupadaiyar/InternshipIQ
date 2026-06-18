@@ -2,7 +2,7 @@
 """
 Authentication API endpoints.
 """
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, status, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth.dependencies import get_current_user
@@ -11,6 +11,8 @@ from app.middleware.rate_limit import limiter
 from app.models.user import User
 from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserResponse, MessageResponse, TokenRefreshRequest, LogoutRequest, OAuthLoginRequest
 from app.services.auth_service import AuthService
+from fastapi.responses import RedirectResponse
+from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -101,6 +103,70 @@ async def logout(
     auth_service = AuthService(db)
     await auth_service.logout(data.refresh_token)
     return MessageResponse(message="Successfully logged out")
+
+# Google OAuth initiation endpoint
+@router.get("/google", summary="Initiate Google OAuth flow")
+async def google_start(request: Request) -> RedirectResponse:
+    # Ensure Google OAuth is configured
+    if not (settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google OAuth is not configured on the server"
+        )
+    import urllib.parse
+    redirect_uri = request.url_for("google_callback")
+    params = {
+        "client_id": settings.GOOGLE_CLIENT_ID,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "redirect_uri": redirect_uri,
+        "access_type": "offline",
+        "prompt": "consent",
+    }
+    auth_url = f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+    return RedirectResponse(url=auth_url)
+
+# Google OAuth callback endpoint (receives authorization code)
+@router.get("/google-callback", name="google_callback", summary="Handle Google OAuth callback and exchange code for tokens")
+async def google_callback(request: Request, code: str = None, db: AsyncSession = Depends(get_db)):
+    """Handle Google OAuth callback.
+
+    * Exchange the authorization code for tokens via ``AuthService.login_google``.
+    * Store the access and refresh tokens in HttpOnly cookies.
+    * Redirect the user to the frontend dashboard.
+    """
+    if not code:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Missing authorization code in Google callback",
+        )
+    # ``redirect_uri`` must match the one used in the initiation step.
+    redirect_uri = request.url_for("google_callback")
+    auth_service = AuthService(db)
+    token_resp = await auth_service.login_google(code, redirect_uri)
+
+    # Front‑end URL to land after a successful login.
+    frontend_dashboard = "http://localhost:3000/dashboard"
+    response = RedirectResponse(url=frontend_dashboard)
+
+    # Set JWTs as HttpOnly cookies (dev settings – not Secure). Adjust max_age as needed.
+    # In development we allow JS to read the token cookies for convenience.
+    httponly_flag = False if settings.is_development else True
+    response.set_cookie(
+        key="access_token",
+        value=token_resp.access_token,
+        httponly=httponly_flag,
+        max_age=60 * 15,  # 15 min matches ACCESS_TOKEN_EXPIRE_MINUTES
+        path="/",
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=token_resp.refresh_token,
+        httponly=httponly_flag,
+        max_age=60 * 60 * 24 * 7,  # 7 days matches REFRESH_TOKEN_EXPIRE_DAYS
+        path="/",
+    )
+    return response
 
 
 @router.post(

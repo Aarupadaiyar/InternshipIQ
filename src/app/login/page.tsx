@@ -82,26 +82,21 @@ export default function LoginPage() {
   }
 
   const handleOAuthLogin = (provider: 'google' | 'github') => {
-    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || 'mock';
-    const githubClientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 'mock';
-    const redirectUri = `${window.location.origin}/auth/callback/${provider}`;
-
-    const isGoogleMock = googleClientId === 'mock' || googleClientId === '' || googleClientId.startsWith('your-google-')
-    const isGithubMock = githubClientId === 'mock' || githubClientId === '' || githubClientId.startsWith('your-github-')
+    const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+    const githubClientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || '';
+    // redirectUri is handled by backend, not needed on frontend for Google flow
+    const redirectUri = '';
 
     if (provider === 'google') {
-      if (isGoogleMock) {
-        console.warn('Google Client ID is not configured. Redirecting to development sandbox login.')
-        router.push(`/auth/sandbox?provider=google`)
-        return
-      }
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid%20email%20profile&prompt=select_account`;
-      window.location.href = authUrl;
-    } else {
+      // Redirect to backend to start Google OAuth flow
+      window.location.href = `${API_BASE}/auth/google`;
+    } else if (provider === 'github') {
+      // Keep existing GitHub sandbox behavior or implement similarly later
+      const isGithubMock = githubClientId === 'mock' || githubClientId === '' || githubClientId.startsWith('your-github-');
       if (isGithubMock) {
-        console.warn('GitHub Client ID is not configured. Redirecting to development sandbox login.')
-        router.push(`/auth/sandbox?provider=github`)
-        return
+        console.warn('GitHub Client ID is not configured. Redirecting to development sandbox login.');
+        router.push(`/auth/sandbox?provider=github`);
+        return;
       }
       const authUrl = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=user:email`;
       window.location.href = authUrl;

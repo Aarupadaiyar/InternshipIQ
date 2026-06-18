@@ -57,7 +57,16 @@ export default function DashboardPage() {
   const [topGaps, setTopGaps] = useState<{ skill: string; count: number }[]>([])
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
+    // Prefer token from HttpOnly cookie if not present in localStorage (fallback for backend redirect flow)
+  const getCookie = (name: string): string | null => {
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'))
+    return match ? decodeURIComponent(match[2]) : null
+  }
+  let token = localStorage.getItem('token')
+  if (!token) {
+    token = getCookie('access_token') || ''
+    if (token) localStorage.setItem('token', token)
+  }
     if (!token) { window.location.href = '/login'; return }
 
     // Fetch profile and active resume from PostgreSQL
