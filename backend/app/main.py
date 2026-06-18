@@ -258,6 +258,8 @@ def create_app() -> FastAPI:
     app.add_middleware(SecurityHeadersMiddleware)
 
     # 3. Mount Routers
+    from app.parsers.resume.router import router as resume_router
+    app.include_router(resume_router)
     app.include_router(api_router)
 
     # 4. Health Check Route

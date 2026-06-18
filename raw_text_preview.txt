@@ -1,0 +1,98 @@
+PDF Type: text
+Hyperlinks:
+- https://www.linkedin.com/in/aarupadaiyarkj
+- mailto:aarupadaiyarjeyapal@gmail.com
+- https://github.com/Aarupadaiyar
+- https://github.com/Aarupadaiyar/InternshipIQ
+- https://github.com/Aarupadaiyar/Surge-Price-Prediction--Research-Paper
+- https://github.com/Aarupadaiyar/Library-Tracker-main
+- https://catalog-education.oracle.com/pls/certview/sharebadge?id=00934629D4F42D4B8ACB225ED7255D63F13252D305675ED39C269BD410A37093
+- https://www.salesforce.com/trailblazer/a5mkvl88nimw60hgk0
+- https://www.coursera.org/account/accomplishments/verify/0VA7J4RJVE62
+- https://coursera.org/share/b3bf4155ed9fc3d778c6eec3ef1961a8
+- https://gssoc.girlscript.tech/
+
+First 100 lines of raw text:
+Aarupadaiyar KJ
+LinkedIn: linkedin.com/in/aarupadaiyarkj
+Email: aarupadaiyarjeyapal@gmail.com
+GitHub: github.com/Aarupadaiyar
+Mobile: +91-6374597047
+SKILLS
+Languages:
+Python, Java, SQL
+AI / ML:
+Scikit-learn, Regression Modeling, Feature Engineering, Predictive Analytics
+Data Analytics:
+Pandas, NumPy, EDA, Data Cleaning, Data Visualization
+Backend & APIs:
+FastAPI, RESTful APIs
+Database:
+MySQL
+Core CS:
+Data Structures & Algorithms, OOP, DBMS, Operating Systems
+Tools:
+Git, GitHub, Regex, Web Scraping, Salesforce Trailhead
+INTERNSHIP
+Data & Reporting Intern – Bitzure
+May ’24 – Aug ’24
+• Processed 25,000+ customer and business records through automated extraction workflows.
+• Built dashboards for campaign tracking and sales analysis.
+• Reduced manual reporting effort by nearly 60%.
+• Converted raw datasets into actionable business insights.
+• Tech: Data Analytics, Web Scraping, Data Cleaning
+PROJECTS
+InternshipIQ – AI Internship Aggregator
+[Link]
+Jan ’26 – Present
+• Aggregated 10,000+ internship listings from 15+ sources using automated scraping pipelines.
+• Orchestrated FastAPI services powering search, filtering, and recommendations across thousands of opportunities.
+• Formulated skill-matching logic covering 100+ technologies and internship role categories.
+• Streamlined validation workflows, improving data quality across 10,000+ internship records.
+• Tech: Python, FastAPI, Pandas, Regex, Requests, MySQL
+InternshipIQ – Surge Price Prediction System
+[Link]
+Nov ’25
+• Trained regression models on 10,000+ ride records to forecast surge pricing trends.
+• Refined 20+ ride attributes through preprocessing, feature engineering, and outlier treatment.
+• Benchmarked model performance using MAE, RMSE, and R2 across multiple algorithms.
+• Investigated demand patterns influencing surge fluctuations across locations and peak hours.
+• Tech: Python, Pandas, NumPy, Scikit-learn
+Java Book Management System
+[Link]
+May ’25
+• Crafted a library management system supporting 500+ books and inventory operations.
+• Leveraged Java Collections Framework for efficient storage and retrieval of records.
+• Integrated file persistence enabling reliable management of hundreds of transactions.
+• Modularized application logic into reusable components, improving maintainability and scalability.
+• Tech: Java, Collections Framework, OOP, File Handling
+TRAINING
+Data Structures & Algorithms using Java
+Aug ’25
+• Covered Java fundamentals, DSA concepts, and algorithmic problem solving.
+• Practiced implementation-focused exercises and mini-projects.
+CERTIFICATIONS
+• Oracle AI Foundations Associate – Oracle
+May ’26
+• Earned 58 Salesforce Trailhead Badges – Trailblazer Profile
+Jan ’26
+• Introduction to Hardware and Operating Systems – IBM
+Sep ’24
+• Fundamentals of Network Communication – University of Colorado System
+Sep ’24
+ACHIEVEMENTS
+• Official Contributor – GirlScript Summer of Code 2026 (GSSoC’26)
+May ’26
+• Rank 1 among 200 teams in University Hackathon “Techlingua”
+Feb ’24
+EDUCATION
+Lovely Professional University
+Aug ’23 – Present
+B.Tech, Computer Science and Engineering
+CGPA: 8.0
+Jay Tech International Senior Secondary School
+2020 – 2021
+CBSE Class XII – 93%
+Jay Tech International Senior Secondary School
+2018 – 2019
+CBSE Class X – 89%

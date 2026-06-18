@@ -1,0 +1,22 @@
+- `[ /]` Define overall parser architecture (modules, data flow)
+- `[ ]` Design SQLite schema for storing parsed JSON
+- `[ ]` Implement extraction wrappers (PDF, DOCX, fallback)
+- `[ ]` Implement layout detection and section classification
+- `[ ]` Implement entity extraction (name, email, phone, socials)
+- `[ ]` Implement skill taxonomy and extraction
+- `[ ]` Implement hidden skill inference logic
+- `[ ]` Implement career recommendation engine
+- `[ ]` Implement skill gap analysis module
+- `[ ]` Implement ATS scoring and feedback generator
+- `[ ]` Build FastAPI endpoint `/resume/parse` (sync)
+- `[ ]` Integrate endpoint with frontend upload component
+- `[ ]` Write unit tests for each extractor using sample resumes
+- `[ ]` Write integration benchmark using 200-resume dataset
+- `[ ]` Generate benchmark_report.md
+- `[ ]` Document architecture in architecture.md
+- `[ ]` Document benchmark plan in benchmark_plan.md
+- `[ ]` Document evaluation strategy in parser_evaluation_strategy.md
+- `[ ]` Update README_HOW_TO_RUN.md with new endpoint usage
+- `[ ]` Verify confidence threshold handling (0.85) and flagging
+- `[ ]` Ensure SQLite migrations for resume_parsed table
+- `[ ]` Perform final testing and validation
