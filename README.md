@@ -1,70 +1,208 @@
-# InternshipIQ MVP
+<div align="center">
 
-> AI-powered internship matching platform — "Spotify for Internships"
+# InternshipIQ
 
-## Stack
-- **Framework**: Next.js 16 (App Router, TypeScript)
-- **Styling**: Tailwind CSS v4 + CSS variables (dark editorial theme)
-- **AI**: Anthropic Claude (`claude-sonnet-4-20250514`) for resume parsing
-- **State**: localStorage (no DB for MVP)
+<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=30&duration=3000&pause=1000&color=FACC15&center=true&vCenter=true&width=1000&lines=AI-Powered+Internship+Discovery;Resume+Matching+Engine;Skill+Gap+Analyzer;Daily+Internship+Recommendations" />
 
-## Pages
-| Route | Description |
-|-------|-------------|
-| `/` | Landing page with rotating hero |
-| `/onboarding` | 3-step: upload resume → review profile → set preferences |
-| `/dashboard` | Match score overview, skill gap chart, daily digest |
-| `/jobs` | Filterable job feed with match %, detail panel |
-| `/gaps` | Full skill gap analysis with learning resources |
-| `/profile` | Editable parsed profile |
+<br/>
 
-## API Routes
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/extract-text` | POST | Extract text from PDF/DOCX/TXT upload |
-| `/api/parse-resume` | POST | Parse resume text → structured JSON via Claude |
-| `/api/jobs` | GET | Return mock jobs scored against user skills |
+![Next JS](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-green?style=for-the-badge)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?style=for-the-badge)
+![AI](https://img.shields.io/badge/Claude-AI-orange?style=for-the-badge)
 
-## Getting Started
+</div>
 
-```bash
-# Install dependencies
-npm install
+---
 
-# Add your Anthropic API key
-echo "ANTHROPIC_API_KEY=sk-ant-..." > .env.local
+## 🎯 Vision
 
-# Run dev server
-npm run dev
+InternshipIQ helps students discover internships that actually match their skills and career goals.
+
+Instead of manually searching multiple portals, InternshipIQ:
+
+- 📄 Parses resumes
+- 🎯 Scores opportunities
+- 📊 Identifies skill gaps
+- 📧 Sends daily recommendations
+- 🔍 Aggregates internships from multiple sources
+
+---
+
+## ⚡ Feature Overview
+
+| Feature | Status |
+|----------|----------|
+| Resume Parser | 🟢 |
+| AI Matching | 🟢 |
+| Job Aggregation | 🟢 |
+| Authentication | 🟡 |
+| Email Digest | 🟡 |
+| Analytics Dashboard | 🟢 |
+| Premium Features | 🟡 |
+
+---
+
+## 🏗 Architecture
+
+```mermaid
+flowchart TD
+
+A[Resume Upload]
+--> B[Resume Parser]
+
+B --> C[Skill Profile]
+
+C --> D[Matching Engine]
+
+D --> E[Job Database]
+
+F[Job Scrapers]
+--> E
+
+E --> G[Recommendation Engine]
+
+G --> H[Dashboard]
+
+G --> I[Email Digest]
 ```
 
-Open [http://localhost:3000](http://localhost:3000)
+---
 
-## User Flow
-1. Land on `/` → click "Analyze my resume"
-2. Upload PDF/DOCX or use "demo profile"
-3. Review AI-parsed profile (skills, experience, projects)
-4. Set preferences (roles, domains, remote/onsite)
-5. Land on `/dashboard` — see match scores + skill gaps
-6. Browse `/jobs` — filter, search, view match breakdown per job
-7. Visit `/gaps` — get learning roadmap to close skill gaps
+## 📊 Current Progress
 
-## AI Architecture
-- **Real AI**: Resume parsing via Claude Sonnet — extracts structured JSON from raw text
-- **Mock matching**: Weighted scoring engine (resume 40% + skills 25% + experience 15% + location 10% + prefs 10%)
-- **Phase 2**: Replace mock with embeddings + semantic search
+### Backend
 
-## Job Sources (Mock Data)
-Currently seeded with 8 real internship-style listings from:
-`Greenhouse`, `Lever`, `Ashby`, `YC Jobs` — lowest legal risk, API-accessible in production
+![Progress](https://progress-bar.dev/75/?title=Backend)
 
-## Deploy
-```bash
-# Vercel (recommended)
-npx vercel
+### Frontend
 
-# Self-hosted
-npm run build && npm start
+![Progress](https://progress-bar.dev/90/?title=Frontend)
+
+### Scrapers
+
+![Progress](https://progress-bar.dev/45/?title=Sources)
+
+### AI Features
+
+![Progress](https://progress-bar.dev/70/?title=AI)
+
+---
+
+## 🔥 Core Modules
+
+### Resume Intelligence
+
+```text
+Resume
+↓
+Skill Extraction
+↓
+Technology Detection
+↓
+Experience Analysis
+↓
+Profile Generation
 ```
 
-Set `ANTHROPIC_API_KEY` in your deployment environment variables.
+### Matching Engine
+
+```text
+Resume Match
++
+Skill Match
++
+Experience Match
++
+Preference Match
+=
+Overall Score
+```
+
+---
+
+## 🛠 Tech Stack
+
+Frontend
+
+```yaml
+Next.js
+React
+TypeScript
+TailwindCSS
+```
+
+Backend
+
+```yaml
+FastAPI
+SQLAlchemy
+PostgreSQL
+Alembic
+```
+
+AI
+
+```yaml
+Claude
+Resume Analysis
+Matching Engine
+Skill Gap Detection
+```
+
+Infrastructure
+
+```yaml
+Docker
+GitHub
+Vercel
+Railway
+```
+
+---
+
+## 📈 Roadmap
+
+### Phase 1
+
+- [x] Landing Page
+- [x] Job Listings
+- [x] Resume Upload
+- [x] Analytics Dashboard
+
+### Phase 2
+
+- [ ] Authentication
+- [ ] Premium Plans
+- [ ] Daily Email Digest
+
+### Phase 3
+
+- [ ] ATS Score
+- [ ] AI Career Coach
+- [ ] Auto Apply System
+
+---
+
+## 👨‍💻 Builder
+
+### Aarupadaiyar KJ
+
+Data Analyst • Software Developer • Builder of InternshipIQ
+
+Focused on:
+
+- AI Products
+- Data Analytics
+- Automation
+- Career Intelligence
+
+---
+
+<div align="center">
+
+⭐ Star this repository if you like the idea.
+
+Built with ❤️ by Aarupadaiyar KJ
+
+</div>
