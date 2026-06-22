@@ -68,26 +68,14 @@ G --> I[Email Digest]
 ```
 
 ---
-
 ## 📊 Current Progress
 
-### Backend
-
-![Progress](https://progress-bar.dev/75/?title=Backend)
-
-### Frontend
-
-![Progress](https://progress-bar.dev/90/?title=Frontend)
-
-### Scrapers
-
-![Progress](https://progress-bar.dev/45/?title=Sources)
-
-### AI Features
-
-![Progress](https://progress-bar.dev/70/?title=AI)
-
----
+| Module | Progress |
+|----------|----------|
+| Backend | ![Backend](https://img.shields.io/badge/Backend-75%25-green?style=for-the-badge) |
+| Frontend | ![Frontend](https://img.shields.io/badge/Frontend-90%25-brightgreen?style=for-the-badge) |
+| Scrapers | ![Scrapers](https://img.shields.io/badge/Scrapers-45%25-yellow?style=for-the-badge) |
+| AI Features | ![AI](https://img.shields.io/badge/AI_Features-70%25-blue?style=for-the-badge) |
 
 ## 🔥 Core Modules
 
